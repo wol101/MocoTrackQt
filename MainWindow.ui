@@ -14,8 +14,66 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout">
+   <layout class="QGridLayout" name="gridLayout_3">
     <item row="0" column="0">
+     <widget class="QGroupBox" name="groupBox">
+      <property name="title">
+       <string>Input Files</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <widget class="QPushButton" name="pushButtonOSIMFile">
+         <property name="text">
+          <string>OSIM File...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="lineEditOSIMFile"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="pushButtonTRCFile">
+         <property name="text">
+          <string>TRC File...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="lineEditTRCFile"/>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="title">
+       <string>Output Files</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="2">
+        <widget class="QLineEdit" name="lineEditOutputFolder"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QPushButton" name="pushButtonOutputFolder">
+         <property name="text">
+          <string>Output Folder...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="pushButtonHidden">
+         <property name="text">
+          <string>Hidden</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QLineEdit" name="lineEditExperimentName"/>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="1" column="0" colspan="2">
      <widget class="QPlainTextEdit" name="plainTextEditOutput">
       <property name="verticalScrollBarPolicy">
        <enum>Qt::ScrollBarAlwaysOn</enum>
@@ -46,7 +104,7 @@
     <addaction name="actionChooseOSIMFile"/>
     <addaction name="actionChooseTRCFile"/>
     <addaction name="separator"/>
-    <addaction name="actionChooseSTOFile"/>
+    <addaction name="actionOutputFolder"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -56,6 +114,15 @@
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
     <string>toolBar</string>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextUnderIcon</enum>
    </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
@@ -95,9 +162,12 @@
     <enum>QAction::TextHeuristicRole</enum>
    </property>
   </action>
-  <action name="actionChooseSTOFile">
+  <action name="actionOutputFolder">
    <property name="text">
-    <string>Output STO File...</string>
+    <string>Output Folder...</string>
+   </property>
+   <property name="toolTip">
+    <string>Choose output folder</string>
    </property>
   </action>
  </widget>

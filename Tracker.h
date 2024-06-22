@@ -17,14 +17,19 @@ public:
     std::string osimFile() const;
     void setOsimFile(const std::string &newOsimFile);
 
-    std::string solutionFile() const;
-    void setSolutionFile(const std::string &newSolutionFile);
+
+    std::string outputFolder() const;
+    void setOutputFolder(const std::string &newOutputFolder);
+
+    std::string experimentName() const;
+    void setExperimentName(const std::string &newExperimentName);
 
 private:
+
     std::string m_trcFile;
     std::string m_osimFile;
-    std::string m_solutionFile;
-    std::string m_name = "qt_track";
+    std::string m_outputFolder;
+    std::string m_experimentName;
 };
 
 #endif // TRACKER_H

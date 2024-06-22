@@ -23,7 +23,11 @@ public slots:
     void actionRun();
     void actionChooseTRCFile();
     void actionChooseOSIMFile();
-    void actionChooseSTOFile();
+    void actionOutputFolder();
+    void textChangedTRCFile(const QString &text);
+    void textChangedOSIMFile(const QString &text);
+    void textChangedOutputFolder(const QString &text);
+    void textChangedExperimentName(const QString &text);
 
 private:
     void closeEvent(QCloseEvent *event) override;
@@ -31,9 +35,13 @@ private:
     void setEnabled();
 
     static bool checkReadFile(const std::string &filename);
+    static bool checkReadFolder(const std::string &foldername);
     static bool checkWriteFile(const std::string &filename);
+    static bool checkWriteFolder(const std::string &foldername);
     static bool checkReadFile(const QString &filename);
+    static bool checkReadFolder(const QString &foldername);
     static bool checkWriteFile(const QString &filename);
+    static bool checkWriteFolder(const QString &foldername);
 
     Ui::MainWindow *ui;
 

@@ -29,14 +29,19 @@ void Tracker::setOsimFile(const std::string &newOsimFile)
     m_osimFile = newOsimFile;
 }
 
-std::string Tracker::solutionFile() const
+void Tracker::setExperimentName(const std::string &newExperimentName)
 {
-    return m_solutionFile;
+    m_experimentName = newExperimentName;
 }
 
-void Tracker::setSolutionFile(const std::string &newSolutionFile)
+std::string Tracker::outputFolder() const
 {
-    m_solutionFile = newSolutionFile;
+    return m_outputFolder;
+}
+
+void Tracker::setOutputFolder(const std::string &newOutputFolder)
+{
+    m_outputFolder = newOutputFolder;
 }
 
 void Tracker::run()

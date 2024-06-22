@@ -1,4 +1,7 @@
 #include "Tracker.h"
+
+#include "pystring/pystring.h"
+
 #include "Common/TRCFileAdapter.h"
 
 #include <OpenSim/Actuators/CoordinateActuator.h>
@@ -6,6 +9,13 @@
 #include <OpenSim/Moco/osimMoco.h>
 
 #include <QFileInfo>
+
+#include <sstream>
+#include <iomanip>
+#include <ctime>
+#include <filesystem>
+
+using namespace std::string_literals;
 
 Tracker::Tracker() {}
 
@@ -34,6 +44,26 @@ void Tracker::setExperimentName(const std::string &newExperimentName)
     m_experimentName = newExperimentName;
 }
 
+double Tracker::startTime() const
+{
+    return m_startTime;
+}
+
+void Tracker::setStartTime(double newStartTime)
+{
+    m_startTime = newStartTime;
+}
+
+double Tracker::endTime() const
+{
+    return m_endTime;
+}
+
+void Tracker::setEndTime(double newEndTime)
+{
+    m_endTime = newEndTime;
+}
+
 std::string Tracker::outputFolder() const
 {
     return m_outputFolder;
@@ -44,11 +74,27 @@ void Tracker::setOutputFolder(const std::string &newOutputFolder)
     m_outputFolder = newOutputFolder;
 }
 
-void Tracker::run()
+std::string *Tracker::run()
 {
+    // everything lives in a datetime folder within the output folder
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    std::stringstream ss;
+    ss << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
+    std::string outputFolder = pystring::os::path::join(m_outputFolder, ss.str());
+    try
+    {
+        std::filesystem::create_directories(outputFolder);
+    }
+    catch (...)
+    {
+        m_lastError = "Error: Tracker::run() unable to create \"" + outputFolder + "\"";
+        return &m_lastError;
+    }
+
     // use the tracking tool
     OpenSim::MocoTrack mocoTrack;
-    mocoTrack.setName(m_name);
+    mocoTrack.setName(m_experimentName);
 
     // load a model
     OpenSim::ModelProcessor modelProcessor(m_osimFile);
@@ -57,6 +103,11 @@ void Tracker::run()
     // modelProcessor.append(OpenSim::ModOpAddExternalLoads("C:/Users/wis/Documents/OpenSim/4.5/Code/CPP/Moco/example3DWalking/grf_walk.xml"));
     modelProcessor.append(OpenSim::ModOpRemoveMuscles());
     modelProcessor.append(OpenSim::ModOpAddReserves(100.0, 1.0));
+
+    // save this model to the outputfolder
+    OpenSim::Model model = modelProcessor.process();
+    std::string modelPath = pystring::os::path::join(outputFolder, m_experimentName + "_model.osim"s);
+    model.print(modelPath);
 
     // add the model to the tracking tool
     mocoTrack.setModel(modelProcessor);

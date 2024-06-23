@@ -10,6 +10,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    ui->toolBar->hide();
+
     // this allows me to use a hidden button to maintain the appearance of the grid layout
     QSizePolicy sizePolicy = ui->pushButtonHidden->sizePolicy();
     sizePolicy.setRetainSizeWhenHidden(true);
@@ -34,7 +36,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEditOSIMFile->setText(settings.value("LastOSIMFile", "").toString());
     ui->lineEditTRCFile->setText(settings.value("LastTRCFile", "").toString());
     ui->lineEditOutputFolder->setText(settings.value("LastOutputFolder", "").toString());
-
+    ui->doubleSpinBoxStartTime->setValue(settings.value("LastStartTime", "").toDouble());
+    ui->doubleSpinBoxEndTime->setValue(settings.value("LastEndTime", "").toDouble());
+    ui->doubleSpinBoxMeshSize->setValue(settings.value("LastMeshSize", "").toDouble());
 }
 
 MainWindow::~MainWindow()
@@ -45,10 +49,13 @@ MainWindow::~MainWindow()
 void MainWindow::closeEvent (QCloseEvent *event)
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
+    settings.setValue("LastStartTime", ui->doubleSpinBoxStartTime->value());
+    settings.setValue("LastEndTime", ui->doubleSpinBoxEndTime->value());
+    settings.setValue("LastMeshSize", ui->doubleSpinBoxMeshSize->value());
     settings.setValue("geometry", saveGeometry());
     settings.setValue("windowState", saveState());
     settings.sync();
-    event->accept(); // pass the event to the default handler
+    event->accept(); // pass the event to the default handle
 }
 
 void MainWindow::actionRun()

@@ -2,13 +2,15 @@
 
 #include "pystring/pystring.h"
 
-#include "Common/TRCFileAdapter.h"
-
+#include <OpenSim/Common/STOFileAdapter.h>
 #include <OpenSim/Actuators/CoordinateActuator.h>
 #include <OpenSim/Actuators/ModelOperators.h>
 #include <OpenSim/Moco/osimMoco.h>
-
-#include <QFileInfo>
+#include <OpenSim/Tools/AnalyzeTool.h>
+#include <OpenSim/Analyses/MuscleAnalysis.h>
+#include <OpenSim/Analyses/JointReaction.h>
+#include <OpenSim/Analyses/ForceReporter.h>
+#include <OpenSim/Analyses/PointKinematics.h>
 
 #include <sstream>
 #include <iomanip>
@@ -39,6 +41,11 @@ void Tracker::setOsimFile(const std::string &newOsimFile)
     m_osimFile = newOsimFile;
 }
 
+std::string Tracker::experimentName() const
+{
+    return m_experimentName;
+}
+
 void Tracker::setExperimentName(const std::string &newExperimentName)
 {
     m_experimentName = newExperimentName;
@@ -62,6 +69,16 @@ double Tracker::endTime() const
 void Tracker::setEndTime(double newEndTime)
 {
     m_endTime = newEndTime;
+}
+
+double Tracker::meshInterval() const
+{
+    return m_meshInterval;
+}
+
+void Tracker::setMeshInterval(double newMeshInterval)
+{
+    m_meshInterval = newMeshInterval;
 }
 
 std::string Tracker::outputFolder() const
@@ -106,7 +123,7 @@ std::string *Tracker::run()
 
     // save this model to the outputfolder
     OpenSim::Model model = modelProcessor.process();
-    std::string modelPath = pystring::os::path::join(outputFolder, m_experimentName + "_model.osim"s);
+    std::string modelPath = pystring::os::path::join(outputFolder, "01_"s + m_experimentName + "_model.osim"s);
     model.print(modelPath);
 
     // add the model to the tracking tool
@@ -146,12 +163,34 @@ std::string *Tracker::run()
     // mocoTrack.set_markers_weight_set(markerWeights);
 
     // set the time subsample
-    mocoTrack.set_initial_time(0.866684);
-    mocoTrack.set_final_time(0.966684);
-    // mocoTrack.set_final_time(1.866704);
+    mocoTrack.set_initial_time(m_startTime);
+    mocoTrack.set_final_time(m_endTime);
     mocoTrack.set_mesh_interval(0.02);
 
     // now run the solver
     OpenSim::MocoSolution mocoSolution = mocoTrack.solve();
-    mocoSolution.write(m_solutionFile);
+
+    // output the required state and control files
+    std::string statesPath = pystring::os::path::join(outputFolder, "02_"s + m_experimentName + "_states.sto"s);
+    OpenSim::STOFileAdapter::write(mocoSolution.exportToStatesTable(), statesPath);
+    std::string controlsPath = pystring::os::path::join(outputFolder, "03_"s + m_experimentName + "_controls.sto"s);
+    OpenSim::STOFileAdapter::write(mocoSolution.exportToControlsTable(), controlsPath);
+
+    // now run some analyses to get the data we actually want
+    OpenSim::AnalyzeTool analyzeSetup;
+    analyzeSetup.setName(m_experimentName);
+    analyzeSetup.setModelFilename(modelPath);
+    analyzeSetup.setStatesFileName(statesPath);
+    analyzeSetup.updAnalysisSet().adoptAndAppend(new OpenSim::MuscleAnalysis());
+    analyzeSetup.updAnalysisSet().adoptAndAppend(new OpenSim::ForceReporter());
+    analyzeSetup.updAnalysisSet().adoptAndAppend(new OpenSim::JointReaction());
+    analyzeSetup.updAnalysisSet().adoptAndAppend(new OpenSim::PointKinematics());
+    analyzeSetup.updControllerSet().adoptAndAppend(new OpenSim::PrescribedController(controlsPath));
+    std::string analyzePath = pystring::os::path::join(outputFolder, "03_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
+    analyzeSetup.print(analyzePath);
+    OpenSim::AnalyzeTool analyze(analyzePath); // not sure why this needs to be a separate instance but that is how it is done in the examples
+    analyze.run();
+
+    return nullptr;
 }
+

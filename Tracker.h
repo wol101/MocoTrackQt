@@ -30,6 +30,9 @@ public:
     double endTime() const;
     void setEndTime(double newEndTime);
 
+    double meshInterval() const;
+    void setMeshInterval(double newMeshInterval);
+
 private:
 
     std::string m_trcFile;
@@ -39,6 +42,7 @@ private:
 
     double m_startTime = 0;
     double m_endTime = 1.0;
+    double m_meshInterval = 0.02;
 
     std::string m_lastError;
 };

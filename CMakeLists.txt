@@ -30,6 +30,8 @@ set(PROJECT_SOURCES
         Tracker.cpp
         Tracker.h 
         resources.qrc
+        pystring/pystring.cpp
+        pystring/pystring.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -72,6 +74,9 @@ target_link_libraries(MocoTrackQt PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
     "C:/Program Files/OpenSim 4.5/sdk/lib/osimSimulation.lib"
     "C:/Program Files/OpenSim 4.5/sdk/lib/osimTools.lib"
     "C:/Program Files/OpenSim 4.5/sdk/lib/tropter.lib"
+    "C:/Program Files/OpenSim 4.5/sdk/Simbody/lib/SimTKcommon.lib"
+    "C:/Program Files/OpenSim 4.5/sdk/Simbody/lib/SimTKmath.lib"
+    "C:/Program Files/OpenSim 4.5/sdk/Simbody/lib/SimTKsimbody.lib"
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -100,59 +105,57 @@ if(QT_VERSION_MAJOR EQUAL 6)
 endif()
 
 add_custom_command(TARGET MocoTrackQt POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/SimTKcommon.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/SimTKmath.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/SimTKsimbody.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/adolc.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_conic_nlpsol.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_conic_qrqp.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_importer_shell.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_integrator_collocation.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_integrator_cvodes.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_integrator_idas.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_integrator_rk.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_interpolant_bspline.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_interpolant_linear.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_linsol_csparse.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_linsol_csparsecholesky.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_linsol_ldl.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_linsol_lsqr.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_linsol_qr.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_linsol_symbolicqr.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_linsol_tridiag.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_nlpsol_ipopt.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_nlpsol_qrsqp.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_nlpsol_scpgen.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_nlpsol_sqpmethod.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_rootfinder_fast_newton.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_rootfinder_kinsol.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_rootfinder_newton.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_rootfinder_nlpsol.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_sundials_common.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/casadi_xmlfile_tinyxml.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/coinmumps-3.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/concrt140.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/ezc3d.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/ipopt-3.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/libgcc_s_sjlj-1.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/libgfortran-3.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/libifcoremd.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/libblas.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/libiomp5md.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/liblapack.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/libmmd.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/libquadmath-0.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/osimActuators.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/osimAnalyses.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/osimCommon.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/osimExampleComponents.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/osimLepton.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/osimMoco.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/osimSimulation.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/osimTools.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/svml_dispmd.dll" ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy "C:/dev/opensim-core-release/bin/tropter.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/SimTKcommon.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/SimTKmath.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/SimTKsimbody.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/adolc.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_conic_nlpsol.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_conic_qrqp.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_importer_shell.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_integrator_collocation.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_integrator_cvodes.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_integrator_idas.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_integrator_rk.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_interpolant_bspline.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_interpolant_linear.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_linsol_csparse.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_linsol_csparsecholesky.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_linsol_ldl.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_linsol_lsqr.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_linsol_qr.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_linsol_symbolicqr.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_linsol_tridiag.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_nlpsol_ipopt.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_nlpsol_qrsqp.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_nlpsol_scpgen.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_nlpsol_sqpmethod.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_rootfinder_fast_newton.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_rootfinder_kinsol.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_rootfinder_newton.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_rootfinder_nlpsol.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_sundials_common.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/casadi_xmlfile_tinyxml.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/concrt140.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/ezc3d.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/flang.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/flangrti.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/libgcc_s_sjlj-1.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/libgfortran-3.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/libblas.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/liblapack.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/libomp.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/libquadmath-0.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/openblas.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/osimActuators.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/osimAnalyses.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/osimCommon.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/osimExampleComponents.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/osimLepton.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/osimMoco.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/osimSimulation.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/osimTools.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/tropter.dll" ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 function(dump_cmake_variables)

@@ -55,6 +55,8 @@ MainWindow::MainWindow(QWidget *parent)
     // and this timer just makes sure that buttons are regularly updated
     m_basicTimer.start(1000, Qt::CoarseTimer, this);
 
+    restoreGeometry(settings.value("geometry").toByteArray());
+    restoreState(settings.value("windowState").toByteArray());
 }
 
 MainWindow::~MainWindow()
@@ -87,13 +89,15 @@ void MainWindow::basicTimer()
     if (cerrStr.size())
     {
         log(QString::fromStdString(cerrStr));
-        m_capturedCerr.clear();
+        m_capturedCerr.clear(); // clears errors
+        m_capturedCerr.str(""); // empties the stringstream
     }
     std::string coutStr = m_capturedCout.str();
     if (coutStr.size())
     {
         log(QString::fromStdString(coutStr));
         m_capturedCout.clear();
+        m_capturedCout.str("");
     }
     if (m_trackerFuture.valid())
     {

@@ -117,6 +117,7 @@ void Tracker::setOutputFolder(const std::string &newOutputFolder)
 
 std::string *Tracker::run()
 {
+    m_lastError.clear();
     // everything lives in a datetime folder within the output folder
     auto const time = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
     std::string folderName = std::format("{:%Y-%m-%d_%H-%M-%S}", time);

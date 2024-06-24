@@ -3,6 +3,8 @@
 
 #include <QFileDialog>
 #include <QSettings>
+#include <QMessageBox>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,11 +14,15 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->toolBar->hide();
 
+    m_redirectCerr = std::make_unique<cerrRedirect>(m_capturedCerr.rdbuf());
+    m_redirectCout = std::make_unique<coutRedirect>(m_capturedCout.rdbuf());
+
+
     // this allows me to use a hidden button to maintain the appearance of the grid layout
-    QSizePolicy sizePolicy = ui->pushButtonHidden->sizePolicy();
-    sizePolicy.setRetainSizeWhenHidden(true);
-    ui->pushButtonHidden->setSizePolicy(sizePolicy);
-    ui->pushButtonHidden->hide();
+    // QSizePolicy sizePolicy = ui->pushButtonHidden->sizePolicy();
+    // sizePolicy.setRetainSizeWhenHidden(true);
+    // ui->pushButtonHidden->setSizePolicy(sizePolicy);
+    // ui->pushButtonHidden->hide();
 
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionRun, &QAction::triggered, this, &MainWindow::actionRun);
@@ -26,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pushButtonOSIMFile, &QPushButton::clicked, this, &MainWindow::actionChooseOSIMFile);
     connect(ui->pushButtonTRCFile, &QPushButton::clicked, this, &MainWindow::actionChooseTRCFile);
     connect(ui->pushButtonOutputFolder, &QPushButton::clicked, this, &MainWindow::actionOutputFolder);
+    connect(ui->pushButtonRun, &QPushButton::clicked, this, &MainWindow::actionRun);
     connect(ui->lineEditOSIMFile, &QLineEdit::textChanged, this, &MainWindow::textChangedOSIMFile);
     connect(ui->lineEditTRCFile, &QLineEdit::textChanged, this, &MainWindow::textChangedTRCFile);
     connect(ui->lineEditOutputFolder, &QLineEdit::textChanged, this, &MainWindow::textChangedOutputFolder);
@@ -39,6 +46,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->doubleSpinBoxStartTime->setValue(settings.value("LastStartTime", "").toDouble());
     ui->doubleSpinBoxEndTime->setValue(settings.value("LastEndTime", "").toDouble());
     ui->doubleSpinBoxMeshSize->setValue(settings.value("LastMeshSize", "").toDouble());
+
+    // and this timer just makes sure that buttons are regularly updated
+    m_basicTimer.start(1000, Qt::CoarseTimer, this);
+
 }
 
 MainWindow::~MainWindow()
@@ -58,8 +69,49 @@ void MainWindow::closeEvent (QCloseEvent *event)
     event->accept(); // pass the event to the default handle
 }
 
+void MainWindow::timerEvent(QTimerEvent *event)
+{
+    if (event->timerId() == m_basicTimer.timerId()) { basicTimer(); }
+    else { QMainWindow::timerEvent(event); }
+}
+
+void MainWindow::basicTimer()
+{
+    std::string cerrStr = m_capturedCerr.str();
+    if (cerrStr.size())
+    {
+        log(QString::fromStdString(cerrStr));
+        m_capturedCerr.clear();
+    }
+    std::string coutStr = m_capturedCout.str();
+    if (coutStr.size())
+    {
+        log(QString::fromStdString(coutStr));
+        m_capturedCout.clear();
+    }
+}
+
 void MainWindow::actionRun()
 {
+    setStatusString("Running MocoTrack");
+    try
+    {
+        if (!checkReadFile(m_tracker.osimFile())) throw std::runtime_error("OSIM file cannot be read");
+        if (!checkReadFile(m_tracker.trcFile())) throw std::runtime_error("TRC file cannot be read");
+        if (!checkWriteFolder(m_tracker.outputFolder())) throw std::runtime_error("Output folder cannot be used");
+        if (m_tracker.experimentName().size() == 0) throw std::runtime_error("Experiment name not valid");
+        if (ui->doubleSpinBoxStartTime->value() >= ui->doubleSpinBoxEndTime->value()) throw std::runtime_error("Invalid start and end times");
+        if (ui->doubleSpinBoxMeshSize->value() <= 0) throw std::runtime_error("Invalid mesh size");
+    }
+    catch (const std::runtime_error& ex)
+    {
+        setStatusString(QString("Run Error: ") + QString::fromStdString(ex.what()));
+        QMessageBox::critical(this, "Run Error", QString::fromStdString(ex.what()));
+        return;
+    }
+    m_tracker.setStartTime(ui->doubleSpinBoxStartTime->value());
+    m_tracker.setEndTime(ui->doubleSpinBoxEndTime->value());
+    m_tracker.setMeshInterval(ui->doubleSpinBoxMeshSize->value());
     m_tracker.run();
     setEnabled();
 }
@@ -91,7 +143,6 @@ void MainWindow::actionOutputFolder()
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
     QString lastFolder = settings.value("LastOutputFolder", "").toString();
     QString folderName = QFileDialog::getExistingDirectory(this, "Save STO output file", lastFolder);
-
     if (folderName.size())
     {
         ui->lineEditOutputFolder->setText(folderName);
@@ -130,10 +181,27 @@ void MainWindow::textChangedExperimentName(const QString &text)
     setEnabled();
 }
 
-
 void MainWindow::setEnabled()
 {
     ui->actionRun->setEnabled(checkReadFile(m_tracker.osimFile()) && checkReadFile(m_tracker.trcFile()) && checkWriteFolder(m_tracker.outputFolder()) && m_tracker.experimentName().size());
+}
+
+void MainWindow::setStatusString(const QString &s)
+{
+    QStringList lines = s.split("\n", Qt::SkipEmptyParts);
+    if (lines.size() == 0) { statusBar()->showMessage(s); }
+    else { statusBar()->showMessage(lines[0]); }
+    statusBar()->repaint();
+    log(s);
+}
+
+void MainWindow::log(const QString &text)
+{
+    if (text.trimmed().size()) // only log strings with content
+    {
+        ui->plainTextEditOutput->appendPlainText(text);
+        ui->plainTextEditOutput->repaint();
+    }
 }
 
 bool MainWindow::checkReadFile(const std::string &filename)

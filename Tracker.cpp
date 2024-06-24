@@ -108,6 +108,9 @@ std::string *Tracker::run()
         m_lastError = "Error: Tracker::run() unable to create \"" + outputFolder + "\"";
         return &m_lastError;
     }
+    auto currentPath = std::filesystem::current_path();
+    std::filesystem::current_path(outputFolder);
+
 
     // use the tracking tool
     OpenSim::MocoTrack mocoTrack;
@@ -190,6 +193,8 @@ std::string *Tracker::run()
     analyzeSetup.print(analyzePath);
     OpenSim::AnalyzeTool analyze(analyzePath); // not sure why this needs to be a separate instance but that is how it is done in the examples
     analyze.run();
+
+    std::filesystem::current_path(currentPath);
 
     return nullptr;
 }

@@ -169,9 +169,8 @@ void MainWindow::actionStop()
 {
     setStatusString("Trying to stop simulation");
     if (!m_trackerFuture.valid()) return;
-    std::string stdoutPath = m_tracker.stdoutPath();
-    QFileInfo fileInfo(QString::fromStdString(stdoutPath));
-    QDir dir(fileInfo.absolutePath());
+    std::string workingPath = m_tracker.workingPath();
+    QDir dir(QString::fromStdString(workingPath));
     QStringList itemList = dir.entryList(QDir::Files, QDir::SortFlag::Name);
     for (auto &&item : itemList)
     {
@@ -184,6 +183,24 @@ void MainWindow::actionStop()
         }
     }
 }
+
+bool MainWindow::isStopable()
+{
+    if (!m_trackerFuture.valid()) return false;
+    std::string workingPath = m_tracker.workingPath();
+    QDir dir(QString::fromStdString(workingPath));
+    QStringList itemList = dir.entryList(QDir::Files, QDir::SortFlag::Name);
+    for (auto &&item : itemList)
+    {
+        if (item.startsWith("delete_this_to_stop_optimization"))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 
 void MainWindow::actionChooseOSIMFile()
 {
@@ -266,11 +283,23 @@ void MainWindow::setEnabled()
         for (auto &&menu : list) { enumerateMenu(menu, &actionList); }
         for (auto &&action : actionList) action->setEnabled(false);
         ui->actionQuit->setEnabled(true);
-        ui->actionStop->setEnabled(true);
-        ui->pushButtonStop->setEnabled(true);
+        bool isStoppable = isStopable();
+        ui->actionStop->setEnabled(isStoppable);
+        ui->pushButtonStop->setEnabled(isStoppable);
     }
     else
     {
+        auto children = findChildren<QWidget*>();
+        for (auto &&it : children)
+        {
+            if (QPushButton *button = dynamic_cast<QPushButton *>(it)) { button->setEnabled(true); }
+            if (QLineEdit *lineEdit = dynamic_cast<QLineEdit *>(it)) { lineEdit->setEnabled(true); }
+            if (QDoubleSpinBox *spinBox = dynamic_cast<QDoubleSpinBox *>(it)) { spinBox->setEnabled(true); }
+        }
+        QList<QAction *> actionList;
+        QList<QMenu*> list = menuBar()->findChildren<QMenu*>();
+        for (auto &&menu : list) { enumerateMenu(menu, &actionList); }
+        for (auto &&action : actionList) action->setEnabled(true);
         ui->actionStop->setEnabled(false);
         ui->pushButtonStop->setEnabled(false);
     }

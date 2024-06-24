@@ -93,6 +93,18 @@ void Tracker::setStdoutPath(const std::string &newStdoutPath)
     m_stdoutPath = newStdoutPath;
 }
 
+std::string Tracker::workingPath()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_workingPath;
+}
+
+void Tracker::setWorkingPath(const std::string &newWorkingPath)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_workingPath = newWorkingPath;
+}
+
 std::string Tracker::outputFolder() const
 {
     return m_outputFolder;
@@ -120,6 +132,7 @@ std::string *Tracker::run()
     }
     auto currentPath = std::filesystem::current_path();
     std::filesystem::current_path(outputFolder);
+    setWorkingPath(outputFolder);
     std::string stdoutPath = pystring::os::path::join(outputFolder, "output.log"s);
     freopen(stdoutPath.c_str(), "a+", stdout);
     setStdoutPath(stdoutPath);
@@ -184,6 +197,16 @@ std::string *Tracker::run()
 
     // now run the solver
     OpenSim::MocoSolution mocoSolution = mocoTrack.solve();
+    if (!mocoSolution.success())
+    {
+        m_lastError = "Error: Solution not found";
+#ifdef WIN32
+        freopen("CON", "w", stdout); /*Mingw C++; Windows*/
+#else
+        freopen("/dev/tty", "w", stdout); /*for gcc, ubuntu*/
+#endif
+        return &m_lastError;
+    }
 
     // output the required state and control files
     std::string statesPath = pystring::os::path::join(outputFolder, "02_"s + m_experimentName + "_states.sto"s);

@@ -36,6 +36,9 @@ public:
     std::string stdoutPath();
     void setStdoutPath(const std::string &newStdoutPath);
 
+    std::string workingPath();
+    void setWorkingPath(const std::string &newWorkingPath);
+
 private:
 
     std::string m_trcFile;
@@ -49,6 +52,7 @@ private:
 
     std::string m_lastError;
     std::string m_stdoutPath;
+    std::string m_workingPath;
 
     std::mutex m_mutex;
 };

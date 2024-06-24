@@ -75,6 +75,7 @@ private:
     void log(const QString &s);
     void basicTimer();
     void enumerateMenu(QMenu *menu, QList<QAction *> *actionList, bool addSubmenus = false, bool addSeparators = false);
+    bool isStopable();
 
     static bool checkReadFile(const std::string &filename);
     static bool checkReadFolder(const std::string &foldername);

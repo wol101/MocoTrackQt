@@ -16,6 +16,7 @@
 #include <iomanip>
 #include <ctime>
 #include <filesystem>
+#include <chrono>
 
 using namespace std::string_literals;
 
@@ -94,11 +95,9 @@ void Tracker::setOutputFolder(const std::string &newOutputFolder)
 std::string *Tracker::run()
 {
     // everything lives in a datetime folder within the output folder
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-    std::stringstream ss;
-    ss << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
-    std::string outputFolder = pystring::os::path::join(m_outputFolder, ss.str());
+    auto const time = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
+    std::string folderName = std::format("{:%Y-%m-%d_%H-%M-%S}", time);
+    std::string outputFolder = pystring::os::path::join(m_outputFolder, folderName);
     try
     {
         std::filesystem::create_directories(outputFolder);
@@ -195,7 +194,6 @@ std::string *Tracker::run()
     analyze.run();
 
     std::filesystem::current_path(currentPath);
-
     return nullptr;
 }
 

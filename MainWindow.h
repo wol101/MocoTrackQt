@@ -6,6 +6,7 @@
 #include <QMainWindow>
 #include <QBasicTimer>
 
+#include <future>
 #include <sstream>
 #include <iostream>
 
@@ -86,6 +87,8 @@ private:
     Ui::MainWindow *ui;
 
     Tracker m_tracker;
+    std::future<void> m_trackerFuture;
+    std::thread m_trackerThread;
 
     std::stringstream m_capturedCerr;
     std::unique_ptr<cerrRedirect> m_redirectCerr;

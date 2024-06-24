@@ -17,7 +17,6 @@ public:
     std::string osimFile() const;
     void setOsimFile(const std::string &newOsimFile);
 
-
     std::string outputFolder() const;
     void setOutputFolder(const std::string &newOutputFolder);
 

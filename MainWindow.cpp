@@ -5,6 +5,7 @@
 #include <QSettings>
 #include <QMessageBox>
 
+using namespace std::chrono_literals;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -77,6 +78,7 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
 void MainWindow::basicTimer()
 {
+    // handle logging
     std::string cerrStr = m_capturedCerr.str();
     if (cerrStr.size())
     {
@@ -89,6 +91,18 @@ void MainWindow::basicTimer()
         log(QString::fromStdString(coutStr));
         m_capturedCout.clear();
     }
+    // check whether tracking has finished
+    if (m_trackerFuture.valid())
+    {
+        if (m_trackerFuture.wait_for(0ms) == std::future_status::ready)
+        {
+            m_trackerFuture.get(); // the function is void so there is nothing to get but this clears the valid flag
+            m_trackerThread.join(); // and it is now safe to join the thread
+        }
+    }
+
+    // check the controls
+    setEnabled();
 }
 
 void MainWindow::actionRun()
@@ -112,7 +126,12 @@ void MainWindow::actionRun()
     m_tracker.setStartTime(ui->doubleSpinBoxStartTime->value());
     m_tracker.setEndTime(ui->doubleSpinBoxEndTime->value());
     m_tracker.setMeshInterval(ui->doubleSpinBoxMeshSize->value());
-    m_tracker.run();
+
+    std::packaged_task<void()> task( [this] { m_tracker.run(); } ); // lambda function is needed because the class function has an implicit pointer
+    m_trackerFuture = task.get_future();
+    std::thread thread(std::move(task));
+    m_trackerThread.swap(thread);
+
     setEnabled();
 }
 
@@ -183,7 +202,7 @@ void MainWindow::textChangedExperimentName(const QString &text)
 
 void MainWindow::setEnabled()
 {
-    ui->actionRun->setEnabled(checkReadFile(m_tracker.osimFile()) && checkReadFile(m_tracker.trcFile()) && checkWriteFolder(m_tracker.outputFolder()) && m_tracker.experimentName().size());
+    ui->actionRun->setEnabled(m_trackerFuture.valid() == false);
 }
 
 void MainWindow::setStatusString(const QString &s)

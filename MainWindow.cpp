@@ -99,17 +99,22 @@ void MainWindow::basicTimer()
             m_currentLogFile = stdoutPath;
             m_currentLogFilePosition = 0;
         }
+        log(QString("Trying to open %1").arg(m_currentLogFile.c_str()));
         FILE *f = fopen(m_currentLogFile.c_str(), "r");
+        if (f)
+        {
+            log(QString("Reading from %1").arg(m_currentLogFilePosition));
 #ifdef WIN32
-        _fseeki64(f, int64_t(m_currentLogFilePosition), SEEK_SET);
+            _fseeki64(f, int64_t(m_currentLogFilePosition), SEEK_SET);
 #else
-        fseek(f, m_currentLogFilePosition, SEEK_SET);
+            fseek(f, m_currentLogFilePosition, SEEK_SET);
 #endif
-        std::vector<char> buffer(1024 * 1024);
-        size_t bytesRead = fread(buffer.data(), buffer.size(), 1, f);
-        fclose(f);
-        log(QString::fromLatin1(buffer.data(), bytesRead));
-        m_currentLogFilePosition += bytesRead;
+            std::vector<char> buffer(1024 * 1024);
+            size_t bytesRead = fread(buffer.data(), 1, buffer.size(), f);
+            fclose(f);
+            log(QString::fromLatin1(buffer.data(), bytesRead));
+            m_currentLogFilePosition += bytesRead;
+        }
     }
     // check whether tracking has finished
     if (m_trackerFuture.valid())
@@ -226,6 +231,7 @@ void MainWindow::textChangedExperimentName(const QString &text)
 void MainWindow::setEnabled()
 {
     ui->actionRun->setEnabled(m_trackerFuture.valid() == false);
+    ui->pushButtonRun->setEnabled(m_trackerFuture.valid() == false);
 }
 
 void MainWindow::setStatusString(const QString &s)

@@ -91,13 +91,35 @@ void MainWindow::basicTimer()
         log(QString::fromStdString(coutStr));
         m_capturedCout.clear();
     }
+    if (m_trackerFuture.valid())
+    {
+        std::string stdoutPath = m_tracker.stdoutPath();
+        if (stdoutPath != m_currentLogFile)
+        {
+            m_currentLogFile = stdoutPath;
+            m_currentLogFilePosition = 0;
+        }
+        FILE *f = fopen(m_currentLogFile.c_str(), "r");
+#ifdef WIN32
+        _fseeki64(f, int64_t(m_currentLogFilePosition), SEEK_SET);
+#else
+        fseek(f, m_currentLogFilePosition, SEEK_SET);
+#endif
+        std::vector<char> buffer(1024 * 1024);
+        size_t bytesRead = fread(buffer.data(), buffer.size(), 1, f);
+        fclose(f);
+        log(QString::fromLatin1(buffer.data(), bytesRead));
+        m_currentLogFilePosition += bytesRead;
+    }
     // check whether tracking has finished
     if (m_trackerFuture.valid())
     {
         if (m_trackerFuture.wait_for(0ms) == std::future_status::ready)
         {
-            m_trackerFuture.get(); // the function is void so there is nothing to get but this clears the valid flag
+            std::string *ptr = m_trackerFuture.get();
+            if (ptr) log(QString::fromStdString(*ptr));
             m_trackerThread.join(); // and it is now safe to join the thread
+            setStatusString("Tracking finished");
         }
     }
 
@@ -107,9 +129,9 @@ void MainWindow::basicTimer()
 
 void MainWindow::actionRun()
 {
-    setStatusString("Running MocoTrack");
     try
     {
+        if (m_trackerFuture.valid()) throw std::runtime_error("MocoTrack already running");
         if (!checkReadFile(m_tracker.osimFile())) throw std::runtime_error("OSIM file cannot be read");
         if (!checkReadFile(m_tracker.trcFile())) throw std::runtime_error("TRC file cannot be read");
         if (!checkWriteFolder(m_tracker.outputFolder())) throw std::runtime_error("Output folder cannot be used");
@@ -123,14 +145,15 @@ void MainWindow::actionRun()
         QMessageBox::critical(this, "Run Error", QString::fromStdString(ex.what()));
         return;
     }
+    setStatusString("Running MocoTrack");
     m_tracker.setStartTime(ui->doubleSpinBoxStartTime->value());
     m_tracker.setEndTime(ui->doubleSpinBoxEndTime->value());
     m_tracker.setMeshInterval(ui->doubleSpinBoxMeshSize->value());
 
-    std::packaged_task<void()> task( [this] { m_tracker.run(); } ); // lambda function is needed because the class function has an implicit pointer
+    std::packaged_task<std::string *()> task( [this] { return m_tracker.run(); } ); // lambda function is needed because the class function has an implicit pointer
     m_trackerFuture = task.get_future();
     std::thread thread(std::move(task));
-    m_trackerThread.swap(thread);
+    m_trackerThread.swap(thread); // swap is the only option here for storing the new thread
 
     setEnabled();
 }

@@ -1,6 +1,7 @@
 #ifndef TRACKER_H
 #define TRACKER_H
 
+#include <mutex>
 #include <string>
 
 class Tracker
@@ -32,6 +33,9 @@ public:
     double meshInterval() const;
     void setMeshInterval(double newMeshInterval);
 
+    std::string stdoutPath();
+    void setStdoutPath(const std::string &newStdoutPath);
+
 private:
 
     std::string m_trcFile;
@@ -44,6 +48,9 @@ private:
     double m_meshInterval = 0.02;
 
     std::string m_lastError;
+    std::string m_stdoutPath;
+
+    std::mutex m_mutex;
 };
 
 #endif // TRACKER_H

@@ -11,10 +11,9 @@
 #include <OpenSim/Analyses/JointReaction.h>
 #include <OpenSim/Analyses/ForceReporter.h>
 #include <OpenSim/Analyses/PointKinematics.h>
+#include <OpenSim/Analyses/Kinematics.h>
+#include <OpenSim/Analyses/BodyKinematics.h>
 
-#include <sstream>
-#include <iomanip>
-#include <ctime>
 #include <filesystem>
 #include <chrono>
 
@@ -82,6 +81,18 @@ void Tracker::setMeshInterval(double newMeshInterval)
     m_meshInterval = newMeshInterval;
 }
 
+std::string Tracker::stdoutPath()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_stdoutPath;
+}
+
+void Tracker::setStdoutPath(const std::string &newStdoutPath)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_stdoutPath = newStdoutPath;
+}
+
 std::string Tracker::outputFolder() const
 {
     return m_outputFolder;
@@ -109,7 +120,9 @@ std::string *Tracker::run()
     }
     auto currentPath = std::filesystem::current_path();
     std::filesystem::current_path(outputFolder);
-
+    std::string stdoutPath = pystring::os::path::join(outputFolder, "output.log"s);
+    freopen(stdoutPath.c_str(), "a+", stdout);
+    setStdoutPath(stdoutPath);
 
     // use the tracking tool
     OpenSim::MocoTrack mocoTrack;
@@ -120,7 +133,7 @@ std::string *Tracker::run()
 
     // modify the model as required
     // modelProcessor.append(OpenSim::ModOpAddExternalLoads("C:/Users/wis/Documents/OpenSim/4.5/Code/CPP/Moco/example3DWalking/grf_walk.xml"));
-    modelProcessor.append(OpenSim::ModOpRemoveMuscles());
+    // modelProcessor.append(OpenSim::ModOpRemoveMuscles());
     modelProcessor.append(OpenSim::ModOpAddReserves(100.0, 1.0));
 
     // save this model to the outputfolder
@@ -183,17 +196,39 @@ std::string *Tracker::run()
     analyzeSetup.setName(m_experimentName);
     analyzeSetup.setModelFilename(modelPath);
     analyzeSetup.setStatesFileName(statesPath);
-    analyzeSetup.updAnalysisSet().adoptAndAppend(new OpenSim::MuscleAnalysis());
-    analyzeSetup.updAnalysisSet().adoptAndAppend(new OpenSim::ForceReporter());
-    analyzeSetup.updAnalysisSet().adoptAndAppend(new OpenSim::JointReaction());
-    analyzeSetup.updAnalysisSet().adoptAndAppend(new OpenSim::PointKinematics());
+    analyzeSetup.setResultsDir(outputFolder);
+    analyzeSetup.setInitialTime(m_startTime);
+    analyzeSetup.setFinalTime(m_endTime);
+
+    auto muscleAnalysis = new OpenSim::MuscleAnalysis();
+    auto forceReporter = new OpenSim::ForceReporter();
+    auto jointReaction = new OpenSim::JointReaction();
+    auto kinematics = new OpenSim::Kinematics();
+    auto bodyKinematics = new OpenSim::BodyKinematics();
+
+    jointReaction->setName("JointReaction"); // doesn't seem to get set properly elsewhere
+
+    analyzeSetup.updAnalysisSet().adoptAndAppend(muscleAnalysis);
+    analyzeSetup.updAnalysisSet().adoptAndAppend(forceReporter);
+    analyzeSetup.updAnalysisSet().adoptAndAppend(jointReaction);
+    analyzeSetup.updAnalysisSet().adoptAndAppend(kinematics);
+    analyzeSetup.updAnalysisSet().adoptAndAppend(bodyKinematics);
+
     analyzeSetup.updControllerSet().adoptAndAppend(new OpenSim::PrescribedController(controlsPath));
-    std::string analyzePath = pystring::os::path::join(outputFolder, "03_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
+
+    std::string analyzePath = pystring::os::path::join(outputFolder, "04_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
     analyzeSetup.print(analyzePath);
+
     OpenSim::AnalyzeTool analyze(analyzePath); // not sure why this needs to be a separate instance but that is how it is done in the examples
     analyze.run();
 
     std::filesystem::current_path(currentPath);
+
+#ifdef WIN32
+    freopen("CON", "w", stdout); /*Mingw C++; Windows*/
+#else
+    freopen("/dev/tty", "w", stdout); /*for gcc, ubuntu*/
+#endif
     return nullptr;
 }
 

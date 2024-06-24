@@ -87,7 +87,7 @@ private:
     Ui::MainWindow *ui;
 
     Tracker m_tracker;
-    std::future<void> m_trackerFuture;
+    std::future<std::string *> m_trackerFuture;
     std::thread m_trackerThread;
 
     std::stringstream m_capturedCerr;
@@ -95,6 +95,9 @@ private:
     std::stringstream m_capturedCout;
     std::unique_ptr<coutRedirect> m_redirectCout;
     QBasicTimer m_basicTimer;
+
+    std::string m_currentLogFile;
+    size_t m_currentLogFilePosition = 0;
 
 };
 #endif // MAINWINDOW_H

@@ -15,9 +15,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->toolBar->hide();
 
+    QFont editorFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    ui->plainTextEditOutput->setFont(editorFont);
+
     m_redirectCerr = std::make_unique<cerrRedirect>(m_capturedCerr.rdbuf());
     m_redirectCout = std::make_unique<coutRedirect>(m_capturedCout.rdbuf());
-
 
     // this allows me to use a hidden button to maintain the appearance of the grid layout
     // QSizePolicy sizePolicy = ui->pushButtonHidden->sizePolicy();
@@ -27,6 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionRun, &QAction::triggered, this, &MainWindow::actionRun);
+    connect(ui->actionStop, &QAction::triggered, this, &MainWindow::actionStop);
     connect(ui->actionChooseOSIMFile, &QAction::triggered, this, &MainWindow::actionChooseOSIMFile);
     connect(ui->actionChooseTRCFile, &QAction::triggered, this, &MainWindow::actionChooseTRCFile);
     connect(ui->actionOutputFolder, &QAction::triggered, this, &MainWindow::actionOutputFolder);
@@ -34,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pushButtonTRCFile, &QPushButton::clicked, this, &MainWindow::actionChooseTRCFile);
     connect(ui->pushButtonOutputFolder, &QPushButton::clicked, this, &MainWindow::actionOutputFolder);
     connect(ui->pushButtonRun, &QPushButton::clicked, this, &MainWindow::actionRun);
+    connect(ui->pushButtonStop, &QPushButton::clicked, this, &MainWindow::actionStop);
     connect(ui->lineEditOSIMFile, &QLineEdit::textChanged, this, &MainWindow::textChangedOSIMFile);
     connect(ui->lineEditTRCFile, &QLineEdit::textChanged, this, &MainWindow::textChangedTRCFile);
     connect(ui->lineEditOutputFolder, &QLineEdit::textChanged, this, &MainWindow::textChangedOutputFolder);
@@ -99,11 +103,9 @@ void MainWindow::basicTimer()
             m_currentLogFile = stdoutPath;
             m_currentLogFilePosition = 0;
         }
-        log(QString("Trying to open %1").arg(m_currentLogFile.c_str()));
         FILE *f = fopen(m_currentLogFile.c_str(), "r");
         if (f)
         {
-            log(QString("Reading from %1").arg(m_currentLogFilePosition));
 #ifdef WIN32
             _fseeki64(f, int64_t(m_currentLogFilePosition), SEEK_SET);
 #else
@@ -161,6 +163,26 @@ void MainWindow::actionRun()
     m_trackerThread.swap(thread); // swap is the only option here for storing the new thread
 
     setEnabled();
+}
+
+void MainWindow::actionStop()
+{
+    setStatusString("Trying to stop simulation");
+    if (!m_trackerFuture.valid()) return;
+    std::string stdoutPath = m_tracker.stdoutPath();
+    QFileInfo fileInfo(QString::fromStdString(stdoutPath));
+    QDir dir(fileInfo.absolutePath());
+    QStringList itemList = dir.entryList(QDir::Files, QDir::SortFlag::Name);
+    for (auto &&item : itemList)
+    {
+        if (item.startsWith("delete_this_to_stop_optimization"))
+        {
+            QString filename = dir.absoluteFilePath(item);
+            QFile file(filename);
+            file.remove();
+            log(QString("Removing %1").arg(filename));
+        }
+    }
 }
 
 void MainWindow::actionChooseOSIMFile()
@@ -230,8 +252,51 @@ void MainWindow::textChangedExperimentName(const QString &text)
 
 void MainWindow::setEnabled()
 {
-    ui->actionRun->setEnabled(m_trackerFuture.valid() == false);
-    ui->pushButtonRun->setEnabled(m_trackerFuture.valid() == false);
+    if (m_trackerFuture.valid()) // it is running so most things need to be disabled
+    {
+        auto children = findChildren<QWidget*>();
+        for (auto &&it : children)
+        {
+            if (QPushButton *button = dynamic_cast<QPushButton *>(it)) { button->setEnabled(false); }
+            if (QLineEdit *lineEdit = dynamic_cast<QLineEdit *>(it)) { lineEdit->setEnabled(false); }
+            if (QDoubleSpinBox *spinBox = dynamic_cast<QDoubleSpinBox *>(it)) { spinBox->setEnabled(false); }
+        }
+        QList<QAction *> actionList;
+        QList<QMenu*> list = menuBar()->findChildren<QMenu*>();
+        for (auto &&menu : list) { enumerateMenu(menu, &actionList); }
+        for (auto &&action : actionList) action->setEnabled(false);
+        ui->actionQuit->setEnabled(true);
+        ui->actionStop->setEnabled(true);
+        ui->pushButtonStop->setEnabled(true);
+    }
+    else
+    {
+        ui->actionStop->setEnabled(false);
+        ui->pushButtonStop->setEnabled(false);
+    }
+}
+
+void MainWindow::enumerateMenu(QMenu *menu, QList<QAction *> *actionList, bool addSubmenus, bool addSeparators)
+{
+    for (auto &&action: menu->actions())
+    {
+        if (action->isSeparator())
+        {
+            if (addSeparators) actionList->append(action);
+        }
+        else
+        {
+            if (action->menu())
+            {
+                if (addSubmenus) actionList->append(action);
+                enumerateMenu(action->menu(), actionList, addSubmenus, addSeparators);
+            }
+            else
+            {
+                actionList->append(action);
+            }
+        }
+    }
 }
 
 void MainWindow::setStatusString(const QString &s)

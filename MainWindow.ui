@@ -104,30 +104,6 @@
        <string>Run</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Start time</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QDoubleSpinBox" name="doubleSpinBoxStartTime">
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="maximum">
-          <double>9999.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>End time</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="3">
         <widget class="QDoubleSpinBox" name="doubleSpinBoxEndTime">
          <property name="decimals">
@@ -141,10 +117,34 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="4">
-        <widget class="QLabel" name="label_3">
+       <item row="0" column="2">
+        <widget class="QLabel" name="label_2">
          <property name="text">
-          <string>Mesh size</string>
+          <string>End time</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="7">
+        <widget class="QPushButton" name="pushButtonRun">
+         <property name="text">
+          <string>Run</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QDoubleSpinBox" name="doubleSpinBoxStartTime">
+         <property name="decimals">
+          <number>3</number>
+         </property>
+         <property name="maximum">
+          <double>9999.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Start time</string>
          </property>
         </widget>
        </item>
@@ -171,10 +171,17 @@
          </property>
         </spacer>
        </item>
-       <item row="0" column="7">
-        <widget class="QPushButton" name="pushButtonRun">
+       <item row="0" column="4">
+        <widget class="QLabel" name="label_3">
          <property name="text">
-          <string>Run</string>
+          <string>Mesh size</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="8">
+        <widget class="QPushButton" name="pushButtonStop">
+         <property name="text">
+          <string>Stop</string>
          </property>
         </widget>
        </item>
@@ -202,6 +209,7 @@
     <addaction name="actionOutputFolder"/>
     <addaction name="separator"/>
     <addaction name="actionRun"/>
+    <addaction name="actionStop"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -264,6 +272,14 @@
    </property>
    <property name="toolTip">
     <string>Choose output folder</string>
+   </property>
+  </action>
+  <action name="actionStop">
+   <property name="text">
+    <string>Stop</string>
+   </property>
+   <property name="toolTip">
+    <string>Stop the simulation</string>
    </property>
   </action>
  </widget>

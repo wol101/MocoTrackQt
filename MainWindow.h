@@ -57,6 +57,7 @@ public:
 
 public slots:
     void actionRun();
+    void actionStop();
     void actionChooseTRCFile();
     void actionChooseOSIMFile();
     void actionOutputFolder();
@@ -73,7 +74,7 @@ private:
     void setStatusString(const QString &s);
     void log(const QString &s);
     void basicTimer();
-
+    void enumerateMenu(QMenu *menu, QList<QAction *> *actionList, bool addSubmenus = false, bool addSeparators = false);
 
     static bool checkReadFile(const std::string &filename);
     static bool checkReadFolder(const std::string &foldername);

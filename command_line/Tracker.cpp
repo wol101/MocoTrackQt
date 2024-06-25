@@ -81,6 +81,66 @@ void Tracker::setMeshInterval(double newMeshInterval)
     m_meshInterval = newMeshInterval;
 }
 
+bool Tracker::addReserves() const
+{
+    return m_addReserves;
+}
+
+void Tracker::setAddReserves(bool newAddReserves)
+{
+    m_addReserves = newAddReserves;
+}
+
+bool Tracker::removeMuscles() const
+{
+    return m_removeMuscles;
+}
+
+void Tracker::setRemoveMuscles(bool newRemoveMuscles)
+{
+    m_removeMuscles = newRemoveMuscles;
+}
+
+double Tracker::reservesOptimalForce() const
+{
+    return m_reservesOptimalForce;
+}
+
+void Tracker::setReservesOptimalForce(double newReservesOptimalForce)
+{
+    m_reservesOptimalForce = newReservesOptimalForce;
+}
+
+double Tracker::globalTrackingWeight() const
+{
+    return m_globalTrackingWeight;
+}
+
+void Tracker::setGlobalTrackingWeight(double newGlobalTrackingWeight)
+{
+    m_globalTrackingWeight = newGlobalTrackingWeight;
+}
+
+double Tracker::convergenceTolerance() const
+{
+    return m_convergenceTolerance;
+}
+
+void Tracker::setConvergenceTolerance(double newConvergenceTolerance)
+{
+    m_convergenceTolerance = newConvergenceTolerance;
+}
+
+double Tracker::constraintTolerance() const
+{
+    return m_constraintTolerance;
+}
+
+void Tracker::setConstraintTolerance(double newConstraintTolerance)
+{
+    m_constraintTolerance = newConstraintTolerance;
+}
+
 std::string Tracker::outputFolder() const
 {
     return m_outputFolder;
@@ -118,13 +178,21 @@ std::string *Tracker::run()
 
     // modify the model as required
     // modelProcessor.append(OpenSim::ModOpAddExternalLoads("C:/Users/wis/Documents/OpenSim/4.5/Code/CPP/Moco/example3DWalking/grf_walk.xml"));
-    // modelProcessor.append(OpenSim::ModOpRemoveMuscles());
-    modelProcessor.append(OpenSim::ModOpAddReserves(100.0, 1.0));
+    if (m_removeMuscles) modelProcessor.append(OpenSim::ModOpRemoveMuscles());
+    if (m_addReserves) modelProcessor.append(OpenSim::ModOpAddReserves(m_reservesOptimalForce));
 
     // save this model to the outputfolder
     OpenSim::Model model = modelProcessor.process();
     std::string modelPath = pystring::os::path::join(outputFolder, "01_"s + m_experimentName + "_model.osim"s);
-    model.print(modelPath);
+    try
+    {
+        model.print(modelPath);
+    }
+    catch (...)
+    {
+        m_lastError = "Error: Tracker::run() unable to create \"" + outputFolder + "\"";
+        return &m_lastError;
+    }
 
     // add the model to the tracking tool
     mocoTrack.setModel(modelProcessor);
@@ -139,10 +207,9 @@ std::string *Tracker::run()
 
     // alter some of the marker properties
     mocoTrack.set_allow_unused_references(true); // allows markers in the trc file not to be used - warning this can easily be an error that needs trapping
-    mocoTrack.set_markers_global_tracking_weight(10);
 
-    // OpenSim::TableProcessor tp = mocoTrack.get_markers_reference();
-    // auto a = tp.process();
+    // adjust the weights
+    mocoTrack.set_markers_global_tracking_weight(m_globalTrackingWeight);
 
     // individual weight setting is more complex
     // OpenSim::MocoWeightSet markerWeights;
@@ -167,8 +234,16 @@ std::string *Tracker::run()
     mocoTrack.set_final_time(m_endTime);
     mocoTrack.set_mesh_interval(0.02);
 
+    // initialise the solver so we can alter some of the parameters
+    OpenSim::MocoStudy mocoStudy = mocoTrack.initialize();
+
+    // Update the solver tolerances.
+    auto& solver = mocoStudy.updSolver<OpenSim::MocoCasADiSolver>();
+    solver.set_optim_convergence_tolerance(m_convergenceTolerance);
+    solver.set_optim_constraint_tolerance(m_constraintTolerance);
+
     // now run the solver
-    OpenSim::MocoSolution mocoSolution = mocoTrack.solve();
+    OpenSim::MocoSolution mocoSolution = mocoStudy.solve();
     if (!mocoSolution.success())
     {
         m_lastError = "Error: Solution not found";
@@ -203,11 +278,46 @@ std::string *Tracker::run()
     analyzeSetup.updAnalysisSet().adoptAndAppend(jointReaction);
     analyzeSetup.updAnalysisSet().adoptAndAppend(kinematics);
     analyzeSetup.updAnalysisSet().adoptAndAppend(bodyKinematics);
-
     analyzeSetup.updControllerSet().adoptAndAppend(new OpenSim::PrescribedController(controlsPath));
-
     std::string analyzePath = pystring::os::path::join(outputFolder, "04_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
     analyzeSetup.print(analyzePath);
+
+    // PointKinematics does not seem to work as I expect so this is a hack to insert the PointKinematic analysis in the right place
+    std::ifstream fi(analyzePath, std::ios::in); // | std::ios::binary);
+    const auto sz = std::filesystem::file_size(analyzePath);
+    std::string result(sz, '\0');
+    fi.read(result.data(), sz);
+    fi.close();
+    size_t analysisSetEnd = result.rfind("</AnalysisSet>");
+    size_t analysisSetEndObjects = result.rfind("</objects>", analysisSetEnd);
+
+    // need to do some work for the point reporter
+    std::vector<std::string> newXML;
+    for (int i = 0; i < model.getMarkerSet().getSize(); i++)
+    {
+        auto marker = model.getMarkerSet().get(i);
+        auto markerName = marker.getName();
+        auto parentName = marker.getParentFrameName();
+        std::vector<std::string> parts = pystring::split(parentName, "/"s);
+        auto location = marker.get_location();
+        newXML.push_back("<PointKinematics name=\""s + markerName + "\">"s);
+        newXML.push_back("<on>true</on>"s);
+        newXML.push_back("<start_time>-Inf</start_time>"s);
+        newXML.push_back("<end_time>+Inf</end_time>"s);
+        newXML.push_back("<step_interval>1</step_interval>"s);
+        newXML.push_back("<in_degrees>1</in_degrees>"s);
+        newXML.push_back("<body_name>"s + parts.back() + "</body_name>"s);
+        newXML.push_back("<relative_to_body_name>ground</relative_to_body_name>"s);
+        newXML.push_back("<point_name>"s + markerName + "</point_name>"s);
+        newXML.push_back("<point>"s + std::to_string(location[0]) + " "s + std::to_string(location[1]) + " "s + std::to_string(location[2]) + "</point>");
+        newXML.push_back("</PointKinematics>"s);
+    }
+    std::ofstream fo(analyzePath, std::ios::out);
+    fo.write(result.data(), analysisSetEndObjects);
+    std::string newXMLStr = pystring::join("\n"s, newXML);
+    fo.write(newXMLStr.data(), newXMLStr.size());
+    fo.write(&result[analysisSetEndObjects], result.size() - analysisSetEndObjects);
+    fo.close();
 
     OpenSim::AnalyzeTool analyze(analyzePath); // not sure why this needs to be a separate instance but that is how it is done in the examples
     analyze.run();

@@ -33,6 +33,24 @@ public:
     double meshInterval() const;
     void setMeshInterval(double newMeshInterval);
 
+    bool addReserves() const;
+    void setAddReserves(bool newAddReserves);
+
+    bool removeMuscles() const;
+    void setRemoveMuscles(bool newRemoveMuscles);
+
+    double reservesOptimalForce() const;
+    void setReservesOptimalForce(double newReservesOptimalForce);
+
+    double globalTrackingWeight() const;
+    void setGlobalTrackingWeight(double newGlobalTrackingWeight);
+
+    double convergenceTolerance() const;
+    void setConvergenceTolerance(double newConvergenceTolerance);
+
+    double constraintTolerance() const;
+    void setConstraintTolerance(double newConstraintTolerance);
+
 private:
 
     std::string m_trcFile;
@@ -43,6 +61,13 @@ private:
     double m_startTime = 0;
     double m_endTime = 1.0;
     double m_meshInterval = 0.02;
+    double m_reservesOptimalForce = 100.0;
+    double m_globalTrackingWeight = 10.0;
+    double m_convergenceTolerance = 1e-3;
+    double m_constraintTolerance = 1e-4;
+
+    bool m_addReserves = false;
+    bool m_removeMuscles = false;
 
     std::string m_lastError;
 };

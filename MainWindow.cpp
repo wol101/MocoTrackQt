@@ -18,9 +18,6 @@ MainWindow::MainWindow(QWidget *parent)
     QFont editorFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     ui->plainTextEditOutput->setFont(editorFont);
 
-    m_redirectCerr = std::make_unique<cerrRedirect>(m_capturedCerr.rdbuf());
-    m_redirectCout = std::make_unique<coutRedirect>(m_capturedCout.rdbuf());
-
     // this allows me to use a hidden button to maintain the appearance of the grid layout
     // QSizePolicy sizePolicy = ui->pushButtonHidden->sizePolicy();
     // sizePolicy.setRetainSizeWhenHidden(true);
@@ -84,71 +81,32 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
 void MainWindow::basicTimer()
 {
-    // handle logging
-    std::string cerrStr = m_capturedCerr.str();
-    if (cerrStr.size())
-    {
-        log(QString::fromStdString(cerrStr));
-        m_capturedCerr.clear(); // clears errors
-        m_capturedCerr.str(""); // empties the stringstream
-    }
-    std::string coutStr = m_capturedCout.str();
-    if (coutStr.size())
-    {
-        log(QString::fromStdString(coutStr));
-        m_capturedCout.clear();
-        m_capturedCout.str("");
-    }
-    if (m_trackerFuture.valid())
-    {
-        std::string stdoutPath = m_tracker.stdoutPath();
-        if (stdoutPath != m_currentLogFile)
-        {
-            m_currentLogFile = stdoutPath;
-            m_currentLogFilePosition = 0;
-        }
-        FILE *f = fopen(m_currentLogFile.c_str(), "r");
-        if (f)
-        {
-#ifdef WIN32
-            _fseeki64(f, int64_t(m_currentLogFilePosition), SEEK_SET);
-#else
-            fseek(f, m_currentLogFilePosition, SEEK_SET);
-#endif
-            std::vector<char> buffer(1024 * 1024);
-            size_t bytesRead = fread(buffer.data(), 1, buffer.size(), f);
-            fclose(f);
-            log(QString::fromLatin1(buffer.data(), bytesRead));
-            m_currentLogFilePosition += bytesRead;
-        }
-    }
-    // check whether tracking has finished
-    if (m_trackerFuture.valid())
-    {
-        if (m_trackerFuture.wait_for(0ms) == std::future_status::ready)
-        {
-            std::string *ptr = m_trackerFuture.get();
-            if (ptr) log(QString::fromStdString(*ptr));
-            m_trackerThread.join(); // and it is now safe to join the thread
-            setStatusString("Tracking finished");
-        }
-    }
-
     // check the controls
     setEnabled();
 }
 
 void MainWindow::actionRun()
 {
+    Q_ASSERT(m_tracker == nullptr);
+
+    QString osimFile = QFileInfo(ui->lineEditOSIMFile->text()).absoluteFilePath();
+    QString trcFile = QFileInfo(ui->lineEditTRCFile->text()).absoluteFilePath();
+    QString outputFolder = QFileInfo(ui->lineEditOutputFolder->text()).absoluteFilePath();
+    QString experimentName = QFileInfo(ui->lineEditOutputFolder->text()).absoluteFilePath();
+    double startTime = ui->doubleSpinBoxStartTime->value();
+    double endTime = ui->doubleSpinBoxEndTime->value();
+    double meshSize = ui->doubleSpinBoxMeshSize->value();
+
+    QString trackerExecutable("C:/Users/wis/Unix/git/MocoTrackQt/command_line/build/Desktop_Qt_6_7_1_MSVC2019_64bit-Release/mocotrack.exe");
     try
     {
-        if (m_trackerFuture.valid()) throw std::runtime_error("MocoTrack already running");
-        if (!checkReadFile(m_tracker.osimFile())) throw std::runtime_error("OSIM file cannot be read");
-        if (!checkReadFile(m_tracker.trcFile())) throw std::runtime_error("TRC file cannot be read");
-        if (!checkWriteFolder(m_tracker.outputFolder())) throw std::runtime_error("Output folder cannot be used");
-        if (m_tracker.experimentName().size() == 0) throw std::runtime_error("Experiment name not valid");
-        if (ui->doubleSpinBoxStartTime->value() >= ui->doubleSpinBoxEndTime->value()) throw std::runtime_error("Invalid start and end times");
-        if (ui->doubleSpinBoxMeshSize->value() <= 0) throw std::runtime_error("Invalid mesh size");
+        if (!checkReadFile(trackerExecutable, true)) throw std::runtime_error("trackerExecutable cannot be run");
+        if (!checkReadFile(osimFile)) throw std::runtime_error("OSIM file cannot be read");
+        if (!checkReadFile(trcFile)) throw std::runtime_error("TRC file cannot be read");
+        if (!checkWriteFolder(outputFolder)) throw std::runtime_error("Output folder cannot be used");
+        if (experimentName.isEmpty()) throw std::runtime_error("Experiment name not valid");
+        if (startTime >= endTime) throw std::runtime_error("Invalid start and end times");
+        if (meshSize <= 0) throw std::runtime_error("Invalid mesh size");
     }
     catch (const std::runtime_error& ex)
     {
@@ -157,50 +115,47 @@ void MainWindow::actionRun()
         return;
     }
     setStatusString("Running MocoTrack");
-    m_tracker.setStartTime(ui->doubleSpinBoxStartTime->value());
-    m_tracker.setEndTime(ui->doubleSpinBoxEndTime->value());
-    m_tracker.setMeshInterval(ui->doubleSpinBoxMeshSize->value());
 
-    std::packaged_task<std::string *()> task( [this] { return m_tracker.run(); } ); // lambda function is needed because the class function has an implicit pointer
-    m_trackerFuture = task.get_future();
-    std::thread thread(std::move(task));
-    m_trackerThread.swap(thread); // swap is the only option here for storing the new thread
+    m_tracker = new QProcess(this);
+    QString program = QFileInfo(trackerExecutable).absoluteFilePath();
+    QStringList arguments;
+    arguments << "--trcFile" << trcFile
+              << "--osimFile" << osimFile
+              << "--outputFolder" << outputFolder
+              << "--experimentName" << experimentName
+              << "--startTime" << QString("%1").arg(startTime, 0, 'g', 17)
+              << "--endTime" << QString("%1").arg(endTime, 0, 'g', 17)
+              << "--meshInterval" << QString("%1").arg(meshSize, 0, 'g', 17);
 
-    setEnabled();
+    connect(m_tracker, &QProcess::readyReadStandardOutput, this, &MainWindow::readStandardOutput);
+    connect(m_tracker, &QProcess::readyReadStandardError, this, &MainWindow::readStandardError);
+    connect(m_tracker, &QProcess::finished, this, &MainWindow::handleFinished);
+
+    QStringList commandLine;
+    commandLine.append(program.count(" ") ? QString("\"") + program + QString("\"") : program );
+    for (auto &&argument : arguments) { commandLine.append(argument.count(" ") ? QString("\"") + argument + QString("\"") : argument); }
+    log(commandLine.join(" "));
+
+    m_tracker->start(program, arguments, QIODeviceBase::ReadWrite | QIODeviceBase::Unbuffered);
+    if (m_tracker->waitForStarted(10000) == false)
+    {
+        m_tracker->kill();
+        delete m_tracker;
+        m_tracker = nullptr;
+        setStatusString("Error starting up the GA");
+    }
 }
+
 
 void MainWindow::actionStop()
 {
-    setStatusString("Trying to stop simulation");
-    if (!m_trackerFuture.valid()) return;
-    std::string workingPath = m_tracker.workingPath();
-    QDir dir(QString::fromStdString(workingPath));
-    QStringList itemList = dir.entryList(QDir::Files, QDir::SortFlag::Name);
-    for (auto &&item : itemList)
-    {
-        if (item.startsWith("delete_this_to_stop_optimization"))
-        {
-            QString filename = dir.absoluteFilePath(item);
-            QFile file(filename);
-            file.remove();
-            log(QString("Removing %1").arg(filename));
-        }
-    }
+    if (!m_tracker) return;
+    m_tracker->kill();
 }
 
 bool MainWindow::isStopable()
 {
-    if (!m_trackerFuture.valid()) return false;
-    std::string workingPath = m_tracker.workingPath();
-    QDir dir(QString::fromStdString(workingPath));
-    QStringList itemList = dir.entryList(QDir::Files, QDir::SortFlag::Name);
-    for (auto &&item : itemList)
-    {
-        if (item.startsWith("delete_this_to_stop_optimization"))
-        {
-            return true;
-        }
-    }
+    if (m_tracker) return true;
     return false;
 }
 
@@ -242,7 +197,6 @@ void MainWindow::actionOutputFolder()
 void MainWindow::textChangedTRCFile(const QString &text)
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    m_tracker.setTrcFile(text.toStdString());
     settings.setValue("LastTRCFile", text);
     setEnabled();
 }
@@ -250,7 +204,6 @@ void MainWindow::textChangedTRCFile(const QString &text)
 void MainWindow::textChangedOSIMFile(const QString &text)
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    m_tracker.setOsimFile(text.toStdString());
     settings.setValue("LastOSIMFile", text);
     setEnabled();
 }
@@ -258,7 +211,6 @@ void MainWindow::textChangedOSIMFile(const QString &text)
 void MainWindow::textChangedOutputFolder(const QString &text)
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    m_tracker.setOutputFolder(text.toStdString());
     settings.setValue("LastOutputFolder", text);
     setEnabled();
 }
@@ -266,14 +218,13 @@ void MainWindow::textChangedOutputFolder(const QString &text)
 void MainWindow::textChangedExperimentName(const QString &text)
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    m_tracker.setExperimentName(text.toStdString());
     settings.setValue("LastExperimentName", text);
     setEnabled();
 }
 
 void MainWindow::setEnabled()
 {
-    if (m_trackerFuture.valid()) // it is running so most things need to be disabled
+    if (m_tracker) // it is running so most things need to be disabled
     {
         auto children = findChildren<QWidget*>();
         for (auto &&it : children)
@@ -350,9 +301,9 @@ void MainWindow::log(const QString &text)
     }
 }
 
-bool MainWindow::checkReadFile(const std::string &filename)
+bool MainWindow::checkReadFile(const std::string &filename, bool checkExecutable)
 {
-    return checkReadFile(QString::fromStdString(filename));
+    return checkReadFile(QString::fromStdString(filename), checkExecutable);
 }
 
 bool MainWindow::checkReadFolder(const std::string &foldername)
@@ -370,13 +321,14 @@ bool MainWindow::checkWriteFolder(const std::string &foldername)
     return checkWriteFolder(QString::fromStdString(foldername));
 }
 
-bool MainWindow::checkReadFile(const QString &filename)
+bool MainWindow::checkReadFile(const QString &filename, bool checkExecutable)
 {
     if (filename.size() == 0) return false;
     QFileInfo info(filename);
     if (!info.isFile()) return false;
-    if (info.isReadable()) return true;
-    return false;
+    if (!info.isReadable()) return false;
+    if (checkExecutable) { if (!info.isExecutable()) return false; }
+    return true;
 }
 
 bool MainWindow::checkReadFolder(const QString &foldername)
@@ -384,8 +336,8 @@ bool MainWindow::checkReadFolder(const QString &foldername)
     if (foldername.size() == 0) return false;
     QFileInfo info(foldername);
     if (!info.isDir()) return false;
-    if (info.isReadable()) return true;
-    return false;
+    if (!info.isReadable()) return false;
+    return true;
 }
 
 bool MainWindow::checkWriteFile(const QString &filename)
@@ -394,17 +346,52 @@ bool MainWindow::checkWriteFile(const QString &filename)
     QFileInfo info(filename);
     if (!info.exists()) return true;
     if (!info.isFile()) return false;
-    if (info.isWritable()) return true;
-    return false;
+    if (!info.isWritable()) return false;
+    return true;
 }
 
 bool MainWindow::checkWriteFolder(const QString &foldername)
 {
     if (foldername.size() == 0) return false;
     QFileInfo info(foldername);
-    if (!info.exists()) return true;
+    if (!info.exists()) { return checkWriteFolder(info.absolutePath()); }
     if (!info.isDir()) return false;
-    if (info.isWritable()) return true;
-    return false;
+    if (!info.isWritable()) return false;
+    return true;
+}
+
+void MainWindow::readStandardError()
+{
+    QString output = m_tracker->readAllStandardError();
+    log(output);
+}
+
+void MainWindow::readStandardOutput()
+{
+    QString output = m_tracker->readAllStandardOutput();
+    log(output);
+}
+
+void MainWindow::handleFinished()
+{
+    if (!m_tracker)
+    {
+        setStatusString("Error in handleFinished");
+        return;
+    }
+    int result = m_tracker->exitCode();
+    int exitStatus = m_tracker->exitStatus();
+    setStatusString(QString("handleFinished exitCode = %1 exitStatus = %2").arg(result).arg(exitStatus));
+    delete m_tracker;
+    m_tracker = nullptr;
+    if (result == 0 && exitStatus == 0)
+    {
+        setStatusString("MocoTrack finished");
+    }
+    else
+    {
+        setStatusString("Error after running MocoTrack");
+    }
+    setEnabled();
 }
 

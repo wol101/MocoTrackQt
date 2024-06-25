@@ -27,8 +27,6 @@ set(PROJECT_SOURCES
         MainWindow.cpp
         MainWindow.h
         MainWindow.ui
-        Tracker.cpp
-        Tracker.h 
         resources.qrc
         pystring/pystring.cpp
         pystring/pystring.h

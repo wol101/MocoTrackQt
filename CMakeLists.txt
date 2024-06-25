@@ -154,6 +154,12 @@ add_custom_command(TARGET MocoTrackQt POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/osimSimulation.dll" ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/osimTools.dll" ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/tropter.dll" ${CMAKE_CURRENT_BINARY_DIR}
+
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_PREFIX_PATH}/bin/Qt6Widgets.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_PREFIX_PATH}/bin/Qt6Gui.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_PREFIX_PATH}/bin/Qt6Core.dll" ${CMAKE_CURRENT_BINARY_DIR}
+
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_PREFIX_PATH}/plugins" "${CMAKE_CURRENT_BINARY_DIR}/plugins"
 )
 
 function(dump_cmake_variables)

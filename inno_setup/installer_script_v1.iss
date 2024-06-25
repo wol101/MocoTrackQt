@@ -50,10 +50,13 @@ Source: "..\command_line\build\Desktop_Qt_6_7_1_MSVC2019_64bit-Release\*.dll"; D
 
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
+Source: "..\build\Desktop_Qt_6_7_1_MSVC2019_64bit-Release\vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
+
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
+Filename: {tmp}\vc_redist.x64.exe; Parameters: "/q /passive /Q:a /c:""msiexec /q /i vcredist.msi"""; StatusMsg: "Installing VC++ 20xx Redistributables..."
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 

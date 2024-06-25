@@ -5,6 +5,8 @@
 #include <QSettings>
 #include <QMessageBox>
 
+#include <thread>
+
 using namespace std::chrono_literals;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -54,6 +56,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
+
+    lookForMocoTrack();
 }
 
 MainWindow::~MainWindow()
@@ -98,11 +102,9 @@ void MainWindow::actionRun()
     double meshSize = ui->doubleSpinBoxMeshSize->value();
     QRegularExpression validExperimentName("^[^<>:\"/\\|?*]+$"); // this just excludes characters that are not valid in windows paths
 
-
-    QString trackerExecutable("C:/Users/wis/Unix/git/MocoTrackQt/command_line/build/Desktop_Qt_6_7_1_MSVC2019_64bit-Release/mocotrack.exe");
     try
     {
-        if (!checkReadFile(trackerExecutable, true)) throw std::runtime_error("trackerExecutable cannot be run");
+        if (!checkReadFile(m_trackerExecutable, true)) throw std::runtime_error("trackerExecutable cannot be run");
         if (!checkReadFile(osimFile)) throw std::runtime_error("OSIM file cannot be read");
         if (!checkReadFile(trcFile)) throw std::runtime_error("TRC file cannot be read");
         if (!checkWriteFolder(outputFolder)) throw std::runtime_error("Output folder cannot be used");
@@ -119,7 +121,7 @@ void MainWindow::actionRun()
     setStatusString("Running MocoTrack");
 
     m_tracker = new QProcess(this);
-    QString program = QFileInfo(trackerExecutable).absoluteFilePath();
+    QString program = QFileInfo(m_trackerExecutable).absoluteFilePath();
     QStringList arguments;
     arguments << "--trcFile" << trcFile
               << "--osimFile" << osimFile
@@ -152,7 +154,12 @@ void MainWindow::actionRun()
 void MainWindow::actionStop()
 {
     if (!m_tracker) return;
+    setStatusString("Trying to stop MocoTrack");
+    ui->actionStop->setEnabled(false);
+    ui->pushButtonStop->setEnabled(false);
+    ui->pushButtonStop->repaint();
     m_tracker->kill();
+    std::this_thread::sleep_for(5000ms);
 }
 
 bool MainWindow::isStopable()
@@ -395,3 +402,54 @@ void MainWindow::handleFinished()
     setEnabled();
 }
 
+void MainWindow::lookForMocoTrack()
+{
+    QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
+#ifdef WIN32
+    QString defaultExecutable = "mocotrack.exe";
+#else
+    QString defaultExecutable = "mocotrack";
+#endif
+    m_trackerExecutable = settings.value("TrackerExecutable", defaultExecutable).toString();
+    if (checkReadFile(m_trackerExecutable, true)) return;
+    QString startSearch = QCoreApplication::applicationDirPath();
+    QDir dir(startSearch);
+    m_trackerExecutable = dir.absoluteFilePath(defaultExecutable);
+    if (checkReadFile(m_trackerExecutable, true))
+    {
+        settings.setValue("TrackerExecutable", m_trackerExecutable);
+        return;
+    }
+    QStringList matchingFiles;
+    FindFiles(defaultExecutable, startSearch, &matchingFiles);
+    for (auto &&matchingFile : matchingFiles)
+    {
+        m_trackerExecutable = matchingFile;
+        if (checkReadFile(m_trackerExecutable, true))
+        {
+            settings.setValue("TrackerExecutable", m_trackerExecutable);
+            return;
+        }
+    }
+    QString fileName = QFileDialog::getOpenFileName(this, "Please choose the MocoTrack executable", startSearch, "Executable Files (*.exe);;All Files (*.*)");
+    if (fileName.size())
+    {
+        m_trackerExecutable = fileName;
+        settings.setValue("TrackerExecutable", m_trackerExecutable);
+        return;
+    }
+    setStatusString(QString("Startup Error: No MocoTrack executable found"));
+    QMessageBox::critical(this, "Startup Error", "No MocoTrack executable found");
+    return;
+}
+
+void MainWindow::FindFiles(const QString &filename, const QString &path, QStringList *matchingFiles)
+{
+    QDir dir(path);
+    QFileInfoList items = dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot); // QDir::NoDotAndDotDot needs to be specified with what is wanted otherwise the list is empty
+    for (auto &&item : items)
+    {
+        if (item.isDir()) { FindFiles(filename, item.fileName(), matchingFiles); }
+        else { if (filename == item.fileName()) matchingFiles->append(dir.absoluteFilePath(item.fileName())); }
+    }
+}

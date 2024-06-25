@@ -47,6 +47,9 @@ private:
     void basicTimer();
     void enumerateMenu(QMenu *menu, QList<QAction *> *actionList, bool addSubmenus = false, bool addSeparators = false);
     bool isStopable();
+    void lookForMocoTrack();
+
+    static void FindFiles(const QString &filename, const QString &path, QStringList *matchingFiles);
 
     static bool checkReadFile(const std::string &filename, bool checkExecutable);
     static bool checkReadFolder(const std::string &foldername);
@@ -65,6 +68,7 @@ private:
     size_t m_currentLogFilePosition = 0;
 
     QProcess *m_tracker = nullptr;
+    QString m_trackerExecutable;
 
 };
 #endif // MAINWINDOW_H

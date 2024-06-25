@@ -92,10 +92,12 @@ void MainWindow::actionRun()
     QString osimFile = QFileInfo(ui->lineEditOSIMFile->text()).absoluteFilePath();
     QString trcFile = QFileInfo(ui->lineEditTRCFile->text()).absoluteFilePath();
     QString outputFolder = QFileInfo(ui->lineEditOutputFolder->text()).absoluteFilePath();
-    QString experimentName = QFileInfo(ui->lineEditOutputFolder->text()).absoluteFilePath();
+    QString experimentName = ui->lineEditExperimentName->text();
     double startTime = ui->doubleSpinBoxStartTime->value();
     double endTime = ui->doubleSpinBoxEndTime->value();
     double meshSize = ui->doubleSpinBoxMeshSize->value();
+    QRegularExpression validExperimentName("^[^<>:\"/\\|?*]+$"); // this just excludes characters that are not valid in windows paths
+
 
     QString trackerExecutable("C:/Users/wis/Unix/git/MocoTrackQt/command_line/build/Desktop_Qt_6_7_1_MSVC2019_64bit-Release/mocotrack.exe");
     try
@@ -104,7 +106,7 @@ void MainWindow::actionRun()
         if (!checkReadFile(osimFile)) throw std::runtime_error("OSIM file cannot be read");
         if (!checkReadFile(trcFile)) throw std::runtime_error("TRC file cannot be read");
         if (!checkWriteFolder(outputFolder)) throw std::runtime_error("Output folder cannot be used");
-        if (experimentName.isEmpty()) throw std::runtime_error("Experiment name not valid");
+        if (!validExperimentName.match(experimentName).hasMatch()) throw std::runtime_error("Experiment name not valid");
         if (startTime >= endTime) throw std::runtime_error("Invalid start and end times");
         if (meshSize <= 0) throw std::runtime_error("Invalid mesh size");
     }
@@ -158,8 +160,6 @@ bool MainWindow::isStopable()
     if (m_tracker) return true;
     return false;
 }
-
-
 
 void MainWindow::actionChooseOSIMFile()
 {

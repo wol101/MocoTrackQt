@@ -173,8 +173,8 @@ void MainWindow::actionRun()
               << "--globalTrackingWeight" << QString("%1").arg(globalWeight, 0, 'g', 17)
               << "--convergenceTolerance" << QString("%1").arg(convergenceTolerance, 0, 'g', 17)
               << "--constraintTolerance" << QString("%1").arg(constraintTolerance, 0, 'g', 17)
-              << "--addReserves" << QString("%1").arg(addReserves)
-              << "--removeMuscles" << QString("%1").arg(removeMuscles)
+              << "--addReserves" << QString("%1").arg(addReserves ? "true" : "false")
+              << "--removeMuscles" << QString("%1").arg(removeMuscles ? "true" : "false")
               << "--meshIntervals" << QString("%1").arg(meshIntervals);
 
     connect(m_tracker, &QProcess::readyReadStandardOutput, this, &MainWindow::readStandardOutput);

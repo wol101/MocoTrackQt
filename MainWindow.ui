@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>765</width>
+    <height>537</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_5">
+   <layout class="QGridLayout" name="gridLayout_6">
     <item row="0" column="0">
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
@@ -64,19 +64,39 @@
         <widget class="QLineEdit" name="lineEditExperimentName"/>
        </item>
        <item row="1" column="0">
-        <widget class="QLabel" name="label_4">
+        <widget class="QPushButton" name="pushButtonAutofill">
          <property name="text">
-          <string>Description</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
+          <string>Expt Autofill</string>
          </property>
         </widget>
        </item>
       </layout>
      </widget>
     </item>
-    <item row="1" column="0" colspan="2">
+    <item row="0" column="2">
+     <widget class="QGroupBox" name="groupBox_5">
+      <property name="title">
+       <string>Control</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_4">
+       <item row="0" column="0">
+        <widget class="QPushButton" name="pushButtonRun">
+         <property name="text">
+          <string>Run</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="pushButtonStop">
+         <property name="text">
+          <string>Stop</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="1" column="0" colspan="3">
      <widget class="QGroupBox" name="groupBox_3">
       <property name="title">
        <string>Output</string>
@@ -90,6 +110,9 @@
          <property name="horizontalScrollBarPolicy">
           <enum>Qt::ScrollBarAlwaysOn</enum>
          </property>
+         <property name="undoRedoEnabled">
+          <bool>false</bool>
+         </property>
          <property name="readOnly">
           <bool>true</bool>
          </property>
@@ -98,90 +121,114 @@
       </layout>
      </widget>
     </item>
-    <item row="2" column="0" colspan="2">
+    <item row="2" column="0" colspan="3">
      <widget class="QGroupBox" name="groupBox_4">
       <property name="title">
        <string>Run</string>
       </property>
-      <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="3">
-        <widget class="QDoubleSpinBox" name="doubleSpinBoxEndTime">
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="minimum">
-          <double>0.000000000000000</double>
-         </property>
-         <property name="value">
-          <double>0.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
+      <layout class="QGridLayout" name="gridLayout_5">
+       <item row="0" column="1">
         <widget class="QLabel" name="label_2">
          <property name="text">
           <string>End time</string>
          </property>
-        </widget>
-       </item>
-       <item row="0" column="7">
-        <widget class="QPushButton" name="pushButtonRun">
-         <property name="text">
-          <string>Run</string>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
-        <widget class="QDoubleSpinBox" name="doubleSpinBoxStartTime">
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="maximum">
-          <double>9999.000000000000000</double>
-         </property>
-        </widget>
+       <item row="1" column="1">
+        <widget class="LineEditDouble" name="lineEditEndTime"/>
+       </item>
+       <item row="1" column="6">
+        <widget class="LineEditDouble" name="lineEditConstraintTolerance"/>
        </item>
        <item row="0" column="0">
         <widget class="QLabel" name="label">
          <property name="text">
           <string>Start time</string>
          </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
         </widget>
        </item>
        <item row="0" column="5">
-        <widget class="QDoubleSpinBox" name="doubleSpinBoxMeshSize">
-         <property name="decimals">
-          <number>3</number>
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>Converge Tol</string>
          </property>
-         <property name="maximum">
-          <double>9999.000000000000000</double>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="4">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Global Weight</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="LineEditDouble" name="lineEditReservesForce"/>
+       </item>
+       <item row="1" column="5">
+        <widget class="LineEditDouble" name="lineEditConvergenceTolerance"/>
+       </item>
+       <item row="1" column="2">
+        <widget class="LineEditDouble" name="lineEditMeshSize"/>
+       </item>
+       <item row="0" column="3">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Reserves Force</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
        <item row="0" column="6">
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Constraint Tol</string>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>257</width>
-           <height>20</height>
-          </size>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
-        </spacer>
+        </widget>
        </item>
-       <item row="0" column="4">
+       <item row="1" column="0">
+        <widget class="LineEditDouble" name="lineEditStartTime"/>
+       </item>
+       <item row="1" column="4">
+        <widget class="LineEditDouble" name="lineEditGlobalWeight"/>
+       </item>
+       <item row="0" column="2">
         <widget class="QLabel" name="label_3">
          <property name="text">
           <string>Mesh size</string>
          </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
         </widget>
        </item>
-       <item row="0" column="8">
-        <widget class="QPushButton" name="pushButtonStop">
+       <item row="0" column="7">
+        <widget class="QCheckBox" name="checkBoxAddReserves">
          <property name="text">
-          <string>Stop</string>
+          <string>Add Reserves</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="7">
+        <widget class="QCheckBox" name="checkBoxRemoveMuscles">
+         <property name="text">
+          <string>Remove Muscles</string>
          </property>
         </widget>
        </item>
@@ -195,7 +242,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>765</width>
      <height>21</height>
     </rect>
    </property>
@@ -213,7 +260,14 @@
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuAutomate">
+    <property name="title">
+     <string>Automate</string>
+    </property>
+    <addaction name="actionBatch"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuAutomate"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -252,10 +306,6 @@
    </property>
   </action>
   <action name="actionRun">
-   <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/running_icon.svg</normaloff>:/images/running_icon.svg</iconset>
-   </property>
    <property name="text">
     <string>Run</string>
    </property>
@@ -282,9 +332,44 @@
     <string>Stop the simulation</string>
    </property>
   </action>
+  <action name="actionBatch">
+   <property name="text">
+    <string>Batch...</string>
+   </property>
+   <property name="toolTip">
+    <string>Run a process batch file</string>
+   </property>
+  </action>
  </widget>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <customwidgets>
+  <customwidget>
+   <class>LineEditDouble</class>
+   <extends>QLineEdit</extends>
+   <header>LineEditDouble.h</header>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>pushButtonOSIMFile</tabstop>
+  <tabstop>lineEditOSIMFile</tabstop>
+  <tabstop>pushButtonTRCFile</tabstop>
+  <tabstop>lineEditTRCFile</tabstop>
+  <tabstop>pushButtonOutputFolder</tabstop>
+  <tabstop>lineEditOutputFolder</tabstop>
+  <tabstop>pushButtonAutofill</tabstop>
+  <tabstop>lineEditExperimentName</tabstop>
+  <tabstop>pushButtonRun</tabstop>
+  <tabstop>pushButtonStop</tabstop>
+  <tabstop>plainTextEditOutput</tabstop>
+  <tabstop>lineEditStartTime</tabstop>
+  <tabstop>lineEditEndTime</tabstop>
+  <tabstop>lineEditMeshSize</tabstop>
+  <tabstop>lineEditReservesForce</tabstop>
+  <tabstop>lineEditGlobalWeight</tabstop>
+  <tabstop>lineEditConvergenceTolerance</tabstop>
+  <tabstop>lineEditConstraintTolerance</tabstop>
+  <tabstop>checkBoxAddReserves</tabstop>
+  <tabstop>checkBoxRemoveMuscles</tabstop>
+ </tabstops>
+ <resources/>
  <connections/>
 </ui>

@@ -27,6 +27,8 @@ public slots:
     void actionChooseTRCFile();
     void actionChooseOSIMFile();
     void actionOutputFolder();
+    void actionBatch();
+    void pushButtonAutofill();
     void textChangedTRCFile(const QString &text);
     void textChangedOSIMFile(const QString &text);
     void textChangedOutputFolder(const QString &text);

@@ -1,6 +1,8 @@
 #include "MainWindow.h"
 #include "./ui_MainWindow.h"
 
+#include "LineEditDouble.h"
+
 #include <QFileDialog>
 #include <QSettings>
 #include <QMessageBox>
@@ -37,19 +39,35 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pushButtonOutputFolder, &QPushButton::clicked, this, &MainWindow::actionOutputFolder);
     connect(ui->pushButtonRun, &QPushButton::clicked, this, &MainWindow::actionRun);
     connect(ui->pushButtonStop, &QPushButton::clicked, this, &MainWindow::actionStop);
+    connect(ui->pushButtonAutofill, &QPushButton::clicked, this, &MainWindow::pushButtonAutofill);
     connect(ui->lineEditOSIMFile, &QLineEdit::textChanged, this, &MainWindow::textChangedOSIMFile);
     connect(ui->lineEditTRCFile, &QLineEdit::textChanged, this, &MainWindow::textChangedTRCFile);
     connect(ui->lineEditOutputFolder, &QLineEdit::textChanged, this, &MainWindow::textChangedOutputFolder);
     connect(ui->lineEditExperimentName, &QLineEdit::textChanged, this, &MainWindow::textChangedExperimentName);
 
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    ui->lineEditExperimentName->setText(settings.value("LastExperimentName", "").toString());
-    ui->lineEditOSIMFile->setText(settings.value("LastOSIMFile", "").toString());
-    ui->lineEditTRCFile->setText(settings.value("LastTRCFile", "").toString());
-    ui->lineEditOutputFolder->setText(settings.value("LastOutputFolder", "").toString());
-    ui->doubleSpinBoxStartTime->setValue(settings.value("LastStartTime", "").toDouble());
-    ui->doubleSpinBoxEndTime->setValue(settings.value("LastEndTime", "").toDouble());
-    ui->doubleSpinBoxMeshSize->setValue(settings.value("LastMeshSize", "").toDouble());
+    ui->lineEditExperimentName->setText(settings.value("ExperimentName", "").toString());
+    ui->lineEditOSIMFile->setText(settings.value("OSIMFile", "").toString());
+    ui->lineEditTRCFile->setText(settings.value("TRCFile", "").toString());
+    ui->lineEditOutputFolder->setText(settings.value("OutputFolder", "").toString());
+
+    auto children = findChildren<LineEditDouble *>();
+    for (auto &&it : children)
+    {
+        it->setBottom(0);
+        it->setDecimals(6);
+        it->setValue(0);
+    }
+    ui->lineEditStartTime->setValue(settings.value("StartTime", "").toDouble());
+    ui->lineEditEndTime->setValue(settings.value("EndTime", "").toDouble());
+    ui->lineEditMeshSize->setValue(settings.value("MeshSize", "").toDouble());
+    ui->lineEditReservesForce->setValue(settings.value("ReservesForce", "").toDouble());
+    ui->lineEditGlobalWeight->setValue(settings.value("GlobalWeight", "").toDouble());
+    ui->lineEditConstraintTolerance->setValue(settings.value("ConstraintTolerance", "").toDouble());
+    ui->lineEditConvergenceTolerance->setValue(settings.value("ConvergenceTolerance", "").toDouble());
+
+    ui->checkBoxAddReserves->setChecked(settings.value("AddReserves", "").toBool());
+    ui->checkBoxRemoveMuscles->setChecked(settings.value("RemoveMuscles", "").toBool());
 
     // and this timer just makes sure that buttons are regularly updated
     m_basicTimer.start(1000, Qt::CoarseTimer, this);
@@ -67,10 +85,27 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent (QCloseEvent *event)
 {
+    if (m_tracker)
+    {
+        int ret = QMessageBox::warning(this, "MocoTrackQt", "mocotrack is running.\nAre you sure you want to close?.", QMessageBox::StandardButtons(QMessageBox::Yes | QMessageBox::No), QMessageBox::No);
+        if (ret == QMessageBox::No)
+        {
+            event->ignore();
+            return;
+        }
+        m_tracker->kill();
+    }
+
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    settings.setValue("LastStartTime", ui->doubleSpinBoxStartTime->value());
-    settings.setValue("LastEndTime", ui->doubleSpinBoxEndTime->value());
-    settings.setValue("LastMeshSize", ui->doubleSpinBoxMeshSize->value());
+    settings.setValue("StartTime", ui->lineEditStartTime->value());
+    settings.setValue("EndTime", ui->lineEditEndTime->value());
+    settings.setValue("MeshSize", ui->lineEditMeshSize->value());
+    settings.setValue("ReservesForce", ui->lineEditReservesForce->value());
+    settings.setValue("GlobalWeight", ui->lineEditGlobalWeight->value());
+    settings.setValue("ConstraintTolerance", ui->lineEditConstraintTolerance->value());
+    settings.setValue("ConvergenceTolerance", ui->lineEditConvergenceTolerance->value());
+    settings.setValue("AddReserves", ui->checkBoxAddReserves->isChecked());
+    settings.setValue("RemoveMuscles", ui->checkBoxRemoveMuscles->isChecked());
     settings.setValue("geometry", saveGeometry());
     settings.setValue("windowState", saveState());
     settings.sync();
@@ -97,9 +132,9 @@ void MainWindow::actionRun()
     QString trcFile = QFileInfo(ui->lineEditTRCFile->text()).absoluteFilePath();
     QString outputFolder = QFileInfo(ui->lineEditOutputFolder->text()).absoluteFilePath();
     QString experimentName = ui->lineEditExperimentName->text();
-    double startTime = ui->doubleSpinBoxStartTime->value();
-    double endTime = ui->doubleSpinBoxEndTime->value();
-    double meshSize = ui->doubleSpinBoxMeshSize->value();
+    double startTime = ui->lineEditStartTime->value();
+    double endTime = ui->lineEditEndTime->value();
+    double meshSize = ui->lineEditMeshSize->value();
     QRegularExpression validExperimentName("^[^<>:\"/\\|?*]+$"); // this just excludes characters that are not valid in windows paths
 
     try
@@ -162,6 +197,17 @@ void MainWindow::actionStop()
     std::this_thread::sleep_for(5000ms);
 }
 
+void MainWindow::actionBatch()
+{
+}
+
+void MainWindow::pushButtonAutofill()
+{
+    auto const time = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
+    std::string experimentName = std::format("Run_{:%Y-%m-%d_%H-%M-%S}", time);
+    ui->lineEditExperimentName->setText(QString::fromStdString(experimentName));
+}
+
 bool MainWindow::isStopable()
 {
     if (m_tracker) return true;
@@ -171,7 +217,7 @@ bool MainWindow::isStopable()
 void MainWindow::actionChooseOSIMFile()
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    QString lastFile = settings.value("LastOSIMFile", "").toString();
+    QString lastFile = settings.value("OSIMFile", "").toString();
     QString fileName = QFileDialog::getOpenFileName(this, "Open OpenSim model file", lastFile, "OpenSim Files (*.osim);;All Files (*.*)");
     if (fileName.size())
     {
@@ -182,7 +228,7 @@ void MainWindow::actionChooseOSIMFile()
 void MainWindow::actionChooseTRCFile()
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    QString lastFile = settings.value("LastTRCFile", "").toString();
+    QString lastFile = settings.value("TRCFile", "").toString();
     QString fileName = QFileDialog::getOpenFileName(this, "Open TRC marker file", lastFile, "TRC Files (*.trc);;All Files (*.*)");
     if (fileName.size())
     {
@@ -193,7 +239,7 @@ void MainWindow::actionChooseTRCFile()
 void MainWindow::actionOutputFolder()
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    QString lastFolder = settings.value("LastOutputFolder", "").toString();
+    QString lastFolder = settings.value("OutputFolder", "").toString();
     QString folderName = QFileDialog::getExistingDirectory(this, "Save STO output file", lastFolder);
     if (folderName.size())
     {
@@ -204,28 +250,28 @@ void MainWindow::actionOutputFolder()
 void MainWindow::textChangedTRCFile(const QString &text)
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    settings.setValue("LastTRCFile", text);
+    settings.setValue("TRCFile", text);
     setEnabled();
 }
 
 void MainWindow::textChangedOSIMFile(const QString &text)
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    settings.setValue("LastOSIMFile", text);
+    settings.setValue("OSIMFile", text);
     setEnabled();
 }
 
 void MainWindow::textChangedOutputFolder(const QString &text)
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    settings.setValue("LastOutputFolder", text);
+    settings.setValue("OutputFolder", text);
     setEnabled();
 }
 
 void MainWindow::textChangedExperimentName(const QString &text)
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
-    settings.setValue("LastExperimentName", text);
+    settings.setValue("ExperimentName", text);
     setEnabled();
 }
 
@@ -238,7 +284,7 @@ void MainWindow::setEnabled()
         {
             if (QPushButton *button = dynamic_cast<QPushButton *>(it)) { button->setEnabled(false); }
             if (QLineEdit *lineEdit = dynamic_cast<QLineEdit *>(it)) { lineEdit->setEnabled(false); }
-            if (QDoubleSpinBox *spinBox = dynamic_cast<QDoubleSpinBox *>(it)) { spinBox->setEnabled(false); }
+            if (QCheckBox *checkBox = dynamic_cast<QCheckBox *>(it)) { checkBox->setEnabled(false); }
         }
         QList<QAction *> actionList;
         QList<QMenu*> list = menuBar()->findChildren<QMenu*>();
@@ -256,7 +302,7 @@ void MainWindow::setEnabled()
         {
             if (QPushButton *button = dynamic_cast<QPushButton *>(it)) { button->setEnabled(true); }
             if (QLineEdit *lineEdit = dynamic_cast<QLineEdit *>(it)) { lineEdit->setEnabled(true); }
-            if (QDoubleSpinBox *spinBox = dynamic_cast<QDoubleSpinBox *>(it)) { spinBox->setEnabled(true); }
+            if (QCheckBox *checkBox = dynamic_cast<QCheckBox *>(it)) { checkBox->setEnabled(false); }
         }
         QList<QAction *> actionList;
         QList<QMenu*> list = menuBar()->findChildren<QMenu*>();

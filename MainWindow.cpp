@@ -313,7 +313,7 @@ void MainWindow::setEnabled()
         {
             if (QPushButton *button = dynamic_cast<QPushButton *>(it)) { button->setEnabled(true); }
             if (QLineEdit *lineEdit = dynamic_cast<QLineEdit *>(it)) { lineEdit->setEnabled(true); }
-            if (QCheckBox *checkBox = dynamic_cast<QCheckBox *>(it)) { checkBox->setEnabled(false); }
+            if (QCheckBox *checkBox = dynamic_cast<QCheckBox *>(it)) { checkBox->setEnabled(true); }
         }
         QList<QAction *> actionList;
         QList<QMenu*> list = menuBar()->findChildren<QMenu*>();

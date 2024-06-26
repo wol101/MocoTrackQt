@@ -6,7 +6,9 @@
 #include <QDebug>
 #include <QLocale>
 #include <QMenu>
-#include <QMessageBox>
+#include <QDialog>
+#include <QGridLayout>
+#include <QPushButton>
 
 #include <limits>
 #include <cmath>
@@ -163,17 +165,26 @@ void LineEditDouble::menuRequestPath(const QPoint &pos)
         if (action->text() == tr("Double Precision")) { setDecimals(std::numeric_limits<double>::max_digits10); setValue(value()); break; }
         if (action->text() == tr("Calculator..."))
         {
-            QMessageBox msgBox;
-            msgBox.setWindowTitle("Python-style Calculator");
-            msgBox.setText(this->text());
-            msgBox.setTextInteractionFlags(Qt::TextEditable);
-            msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-            msgBox.setDefaultButton(QMessageBox::Ok);
-            int ret = msgBox.exec();
-            if (ret == QMessageBox::Button::Ok)
+            QDialog dialog(this);
+            dialog.setWindowTitle("Python-style Calculator");
+            QGridLayout *gridLayout = new QGridLayout(&dialog);
+            QLineEdit *lineEdit = new QLineEdit();
+            lineEdit->setText(this->text());
+            lineEdit->setToolTip("Enter a valid Python expression e.g. 2+math.sin(15)*math.log(3)");
+            gridLayout->addWidget(lineEdit, 0, 0, 1, 2);
+            QPushButton *cancelButtom = new QPushButton("Cancel");
+            gridLayout->addWidget(cancelButtom, 1, 0);
+            QPushButton *okButtom = new QPushButton("OK");
+            okButtom->setDefault(true);
+            gridLayout->addWidget(okButtom, 1, 1);
+            connect(okButtom, SIGNAL(clicked()), &dialog, SLOT(accept()));
+            connect(cancelButtom, SIGNAL(clicked()), &dialog, SLOT(reject()));
+            int ret = dialog.exec();
+            if (ret == QDialog::Accepted)
             {
                 pkpy::VM vm;
-                pkpy::PyObject *result = vm.eval(msgBox.text().toStdString());
+                vm.exec("import math");
+                pkpy::PyObject *result = vm.eval(lineEdit->text().toStdString());
                 double v = pkpy::py_cast<double>(&vm, result);
                 this->setValue(v);
             }

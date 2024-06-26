@@ -71,14 +71,14 @@ void Tracker::setEndTime(double newEndTime)
     m_endTime = newEndTime;
 }
 
-double Tracker::meshInterval() const
+int Tracker::meshIntervals() const
 {
-    return m_meshInterval;
+    return m_meshIntervals;
 }
 
-void Tracker::setMeshInterval(double newMeshInterval)
+void Tracker::setMeshIntervals(int newMeshIntervals)
 {
-    m_meshInterval = newMeshInterval;
+    m_meshIntervals = newMeshIntervals;
 }
 
 bool Tracker::addReserves() const
@@ -232,7 +232,6 @@ std::string *Tracker::run()
     // set the time subsample
     mocoTrack.set_initial_time(m_startTime);
     mocoTrack.set_final_time(m_endTime);
-    mocoTrack.set_mesh_interval(0.02);
 
     // initialise the solver so we can alter some of the parameters
     OpenSim::MocoStudy mocoStudy = mocoTrack.initialize();
@@ -241,6 +240,7 @@ std::string *Tracker::run()
     auto& solver = mocoStudy.updSolver<OpenSim::MocoCasADiSolver>();
     solver.set_optim_convergence_tolerance(m_convergenceTolerance);
     solver.set_optim_constraint_tolerance(m_constraintTolerance);
+    solver.set_num_mesh_intervals(m_meshIntervals);
 
     // now run the solver
     OpenSim::MocoSolution mocoSolution = mocoStudy.solve();

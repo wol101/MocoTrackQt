@@ -19,7 +19,7 @@ int main(int argc, const char **argv)
     // optional arguments
     argparse.AddArgument("-st"s, "--startTime"s, "Start time"s, "0.0"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-et"s, "--endTime"s, "End time"s, "1.0"s, 1, false, ArgParse::Double);
-    argparse.AddArgument("-mi"s, "--meshInterval"s, "Mesh interval"s, "0.02"s, 1, false, ArgParse::Double);
+    argparse.AddArgument("-mi"s, "--meshIntervals"s, "Mesh interval"s, "50"s, 1, false, ArgParse::Int);
     argparse.AddArgument("-rof"s, "--reservesOptimalForce"s, "Reserves optimal force"s, "100.0"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-gtw"s, "--globalTrackingWeight"s, "Global tracking weight"s, "10.0"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-cvt"s, "--convergenceTolerance"s, "Convergence tolerance"s, "1e-3"s, 1, false, ArgParse::Double);
@@ -40,7 +40,7 @@ int main(int argc, const char **argv)
     std::string experimentName;
     double startTime = 0;
     double endTime = 1.0;
-    double meshInterval = 0.02;
+    int meshIntervals = 50;
     double reservesOptimalForce = 100.0;
     double globalTrackingWeight = 10.0;
     double convergenceTolerance = 1e-3;
@@ -54,7 +54,7 @@ int main(int argc, const char **argv)
     argparse.Get("--experimentName"s, &experimentName);
     argparse.Get("--startTime"s, &startTime);
     argparse.Get("--endTime"s, &endTime);
-    argparse.Get("--meshInterval"s, &meshInterval);
+    argparse.Get("--meshIntervals"s, &meshIntervals);
     argparse.Get("--reservesOptimalForce"s, &reservesOptimalForce);
     argparse.Get("--globalTrackingWeight"s, &globalTrackingWeight);
     argparse.Get("--convergenceTolerance"s, &convergenceTolerance);
@@ -69,7 +69,7 @@ int main(int argc, const char **argv)
     tracker.setExperimentName(experimentName);
     tracker.setStartTime(startTime);
     tracker.setEndTime(endTime);
-    tracker.setMeshInterval(meshInterval);
+    tracker.setMeshIntervals(meshIntervals);
     tracker.setReservesOptimalForce(reservesOptimalForce);
     tracker.setGlobalTrackingWeight(globalTrackingWeight);
     tracker.setConvergenceTolerance(convergenceTolerance);

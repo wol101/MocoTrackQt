@@ -54,17 +54,18 @@ MainWindow::MainWindow(QWidget *parent)
     auto children = findChildren<LineEditDouble *>();
     for (auto &&it : children)
     {
-        it->setBottom(0);
+        it->setBottom(std::numeric_limits<float>::min());
         it->setDecimals(6);
-        it->setValue(0);
     }
-    ui->lineEditStartTime->setValue(settings.value("StartTime", "").toDouble());
-    ui->lineEditEndTime->setValue(settings.value("EndTime", "").toDouble());
-    ui->lineEditMeshSize->setValue(settings.value("MeshSize", "").toDouble());
-    ui->lineEditReservesForce->setValue(settings.value("ReservesForce", "").toDouble());
-    ui->lineEditGlobalWeight->setValue(settings.value("GlobalWeight", "").toDouble());
-    ui->lineEditConstraintTolerance->setValue(settings.value("ConstraintTolerance", "").toDouble());
-    ui->lineEditConvergenceTolerance->setValue(settings.value("ConvergenceTolerance", "").toDouble());
+    ui->lineEditStartTime->setBottom(0);
+    ui->lineEditStartTime->setValue(settings.value("StartTime", "0").toDouble());
+    ui->lineEditEndTime->setValue(settings.value("EndTime", "1").toDouble());
+    ui->lineEditReservesForce->setValue(settings.value("ReservesForce", "100").toDouble());
+    ui->lineEditGlobalWeight->setValue(settings.value("GlobalWeight", "10").toDouble());
+    ui->lineEditConstraintTolerance->setValue(settings.value("ConstraintTolerance", "1e-4").toDouble());
+    ui->lineEditConvergenceTolerance->setValue(settings.value("ConvergenceTolerance", "1e-3").toDouble());
+
+    ui->spinBoxMeshIntervals->setValue(settings.value("MeshIntervals", "50").toInt());
 
     ui->checkBoxAddReserves->setChecked(settings.value("AddReserves", "").toBool());
     ui->checkBoxRemoveMuscles->setChecked(settings.value("RemoveMuscles", "").toBool());
@@ -99,11 +100,11 @@ void MainWindow::closeEvent (QCloseEvent *event)
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
     settings.setValue("StartTime", ui->lineEditStartTime->value());
     settings.setValue("EndTime", ui->lineEditEndTime->value());
-    settings.setValue("MeshSize", ui->lineEditMeshSize->value());
     settings.setValue("ReservesForce", ui->lineEditReservesForce->value());
     settings.setValue("GlobalWeight", ui->lineEditGlobalWeight->value());
     settings.setValue("ConstraintTolerance", ui->lineEditConstraintTolerance->value());
     settings.setValue("ConvergenceTolerance", ui->lineEditConvergenceTolerance->value());
+    settings.setValue("MeshIntervals", ui->spinBoxMeshIntervals->value());
     settings.setValue("AddReserves", ui->checkBoxAddReserves->isChecked());
     settings.setValue("RemoveMuscles", ui->checkBoxRemoveMuscles->isChecked());
     settings.setValue("geometry", saveGeometry());
@@ -134,9 +135,14 @@ void MainWindow::actionRun()
     QString experimentName = ui->lineEditExperimentName->text();
     double startTime = ui->lineEditStartTime->value();
     double endTime = ui->lineEditEndTime->value();
-    double meshSize = ui->lineEditMeshSize->value();
+    double reservesForce = ui->lineEditReservesForce->value();
+    double globalWeight = ui->lineEditGlobalWeight->value();
+    double constraintTolerance = ui->lineEditConstraintTolerance->value();
+    double convergenceTolerance = ui->lineEditConvergenceTolerance->value();
+    int meshIntervals = ui->spinBoxMeshIntervals->value();
+    bool addReserves = ui->checkBoxAddReserves->isChecked();
+    bool removeMuscles = ui->checkBoxRemoveMuscles->isChecked();
     QRegularExpression validExperimentName("^[^<>:\"/\\|?*]+$"); // this just excludes characters that are not valid in windows paths
-
     try
     {
         if (!checkReadFile(m_trackerExecutable, true)) throw std::runtime_error("trackerExecutable cannot be run");
@@ -145,7 +151,6 @@ void MainWindow::actionRun()
         if (!checkWriteFolder(outputFolder)) throw std::runtime_error("Output folder cannot be used");
         if (!validExperimentName.match(experimentName).hasMatch()) throw std::runtime_error("Experiment name not valid");
         if (startTime >= endTime) throw std::runtime_error("Invalid start and end times");
-        if (meshSize <= 0) throw std::runtime_error("Invalid mesh size");
     }
     catch (const std::runtime_error& ex)
     {
@@ -164,7 +169,13 @@ void MainWindow::actionRun()
               << "--experimentName" << experimentName
               << "--startTime" << QString("%1").arg(startTime, 0, 'g', 17)
               << "--endTime" << QString("%1").arg(endTime, 0, 'g', 17)
-              << "--meshInterval" << QString("%1").arg(meshSize, 0, 'g', 17);
+              << "--reservesOptimalForce" << QString("%1").arg(reservesForce, 0, 'g', 17)
+              << "--globalTrackingWeight" << QString("%1").arg(globalWeight, 0, 'g', 17)
+              << "--convergenceTolerance" << QString("%1").arg(convergenceTolerance, 0, 'g', 17)
+              << "--constraintTolerance" << QString("%1").arg(constraintTolerance, 0, 'g', 17)
+              << "--addReserves" << QString("%1").arg(addReserves)
+              << "--removeMuscles" << QString("%1").arg(removeMuscles)
+              << "--meshIntervals" << QString("%1").arg(meshIntervals);
 
     connect(m_tracker, &QProcess::readyReadStandardOutput, this, &MainWindow::readStandardOutput);
     connect(m_tracker, &QProcess::readyReadStandardError, this, &MainWindow::readStandardError);

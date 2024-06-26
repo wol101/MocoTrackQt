@@ -30,8 +30,8 @@ public:
     double endTime() const;
     void setEndTime(double newEndTime);
 
-    double meshInterval() const;
-    void setMeshInterval(double newMeshInterval);
+    int meshIntervals() const;
+    void setMeshIntervals(int newMeshIntervals);
 
     bool addReserves() const;
     void setAddReserves(bool newAddReserves);
@@ -60,7 +60,7 @@ private:
 
     double m_startTime = 0;
     double m_endTime = 1.0;
-    double m_meshInterval = 0.02;
+    int m_meshIntervals = 50;
     double m_reservesOptimalForce = 100.0;
     double m_globalTrackingWeight = 10.0;
     double m_convergenceTolerance = 1e-3;

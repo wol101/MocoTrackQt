@@ -127,33 +127,36 @@
        <string>Run</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_5">
-       <item row="0" column="1">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>End time</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="LineEditDouble" name="lineEditEndTime"/>
-       </item>
-       <item row="1" column="6">
-        <widget class="LineEditDouble" name="lineEditConstraintTolerance"/>
+       <item row="1" column="4">
+        <widget class="LineEditDouble" name="lineEditConvergenceTolerance"/>
        </item>
        <item row="0" column="0">
         <widget class="QLabel" name="label">
          <property name="text">
-          <string>Start time</string>
+          <string>Start Time</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
+       <item row="1" column="2">
+        <widget class="LineEditDouble" name="lineEditReservesForce"/>
+       </item>
        <item row="0" column="5">
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Constraint Tol</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="LineEditDouble" name="lineEditGlobalWeight"/>
+       </item>
+       <item row="0" column="4">
         <widget class="QLabel" name="label_6">
          <property name="text">
           <string>Converge Tol</string>
@@ -163,26 +166,17 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="4">
-        <widget class="QLabel" name="label_5">
+       <item row="0" column="1">
+        <widget class="QLabel" name="label_2">
          <property name="text">
-          <string>Global Weight</string>
+          <string>End Time</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
-       <item row="1" column="3">
-        <widget class="LineEditDouble" name="lineEditReservesForce"/>
-       </item>
-       <item row="1" column="5">
-        <widget class="LineEditDouble" name="lineEditConvergenceTolerance"/>
-       </item>
-       <item row="1" column="2">
-        <widget class="LineEditDouble" name="lineEditMeshSize"/>
-       </item>
-       <item row="0" column="3">
+       <item row="0" column="2">
         <widget class="QLabel" name="label_4">
          <property name="text">
           <string>Reserves Force</string>
@@ -193,9 +187,9 @@
         </widget>
        </item>
        <item row="0" column="6">
-        <widget class="QLabel" name="label_7">
+        <widget class="QLabel" name="label_3">
          <property name="text">
-          <string>Constraint Tol</string>
+          <string>Mesh Intervals</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -205,19 +199,6 @@
        <item row="1" column="0">
         <widget class="LineEditDouble" name="lineEditStartTime"/>
        </item>
-       <item row="1" column="4">
-        <widget class="LineEditDouble" name="lineEditGlobalWeight"/>
-       </item>
-       <item row="0" column="2">
-        <widget class="QLabel" name="label_3">
-         <property name="text">
-          <string>Mesh size</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="7">
         <widget class="QCheckBox" name="checkBoxAddReserves">
          <property name="text">
@@ -225,10 +206,36 @@
          </property>
         </widget>
        </item>
+       <item row="0" column="3">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Global Weight</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="LineEditDouble" name="lineEditEndTime"/>
+       </item>
+       <item row="1" column="5">
+        <widget class="LineEditDouble" name="lineEditConstraintTolerance"/>
+       </item>
        <item row="1" column="7">
         <widget class="QCheckBox" name="checkBoxRemoveMuscles">
          <property name="text">
           <string>Remove Muscles</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="6">
+        <widget class="QSpinBox" name="spinBoxMeshIntervals">
+         <property name="minimum">
+          <number>2</number>
+         </property>
+         <property name="maximum">
+          <number>99999</number>
          </property>
         </widget>
        </item>
@@ -362,7 +369,6 @@
   <tabstop>plainTextEditOutput</tabstop>
   <tabstop>lineEditStartTime</tabstop>
   <tabstop>lineEditEndTime</tabstop>
-  <tabstop>lineEditMeshSize</tabstop>
   <tabstop>lineEditReservesForce</tabstop>
   <tabstop>lineEditGlobalWeight</tabstop>
   <tabstop>lineEditConvergenceTolerance</tabstop>

@@ -8,6 +8,7 @@
 #include <QMessageBox>
 
 #include <thread>
+#include <chrono>>
 
 using namespace std::chrono_literals;
 
@@ -34,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionChooseOSIMFile, &QAction::triggered, this, &MainWindow::actionChooseOSIMFile);
     connect(ui->actionChooseTRCFile, &QAction::triggered, this, &MainWindow::actionChooseTRCFile);
     connect(ui->actionOutputFolder, &QAction::triggered, this, &MainWindow::actionOutputFolder);
+    connect(ui->actionBatch, &QAction::triggered, this, &MainWindow::actionBatch);
+    connect(ui->actionChooseMocoTrack, &QAction::triggered, this, &MainWindow::actionChooseMocoTrackExe);
     connect(ui->pushButtonOSIMFile, &QPushButton::clicked, this, &MainWindow::actionChooseOSIMFile);
     connect(ui->pushButtonTRCFile, &QPushButton::clicked, this, &MainWindow::actionChooseTRCFile);
     connect(ui->pushButtonOutputFolder, &QPushButton::clicked, this, &MainWindow::actionOutputFolder);
@@ -142,7 +145,7 @@ void MainWindow::actionRun()
     int meshIntervals = ui->spinBoxMeshIntervals->value();
     bool addReserves = ui->checkBoxAddReserves->isChecked();
     bool removeMuscles = ui->checkBoxRemoveMuscles->isChecked();
-    QRegularExpression validExperimentName("^[^<>:\"/\\|?*]+$"); // this just excludes characters that are not valid in windows paths
+    static QRegularExpression validExperimentName("^[^<>:\"/\\|?*]+$"); // this just excludes characters that are not valid in windows paths
     try
     {
         if (!checkReadFile(m_trackerExecutable, true)) throw std::runtime_error("trackerExecutable cannot be run");
@@ -159,6 +162,11 @@ void MainWindow::actionRun()
         return;
     }
     setStatusString("Running MocoTrack");
+
+    m_startTime = std::chrono::system_clock::now();
+    auto const time = std::chrono::current_zone()->to_local(m_startTime);
+    std::string timeString = std::format("Simulation started at {:%Y-%m-%d %H-%M-%S}\n", time);
+    log(QString::fromStdString(timeString));
 
     m_tracker = new QProcess(this);
     QString program = QFileInfo(m_trackerExecutable).absoluteFilePath();
@@ -255,6 +263,18 @@ void MainWindow::actionOutputFolder()
     if (folderName.size())
     {
         ui->lineEditOutputFolder->setText(folderName);
+    }
+}
+
+void MainWindow::actionChooseMocoTrackExe()
+{
+    QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
+    QString lastFile = settings.value("TrackerExecutable", "mocotrack.exe").toString();
+    QString fileName = QFileDialog::getOpenFileName(this, "Please choose the MocoTrack executable", lastFile, "Executable Files (*.exe);;All Files (*.*)");
+    if (fileName.size())
+    {
+        m_trackerExecutable = fileName;
+        settings.setValue("TrackerExecutable", m_trackerExecutable);
     }
 }
 
@@ -441,9 +461,18 @@ void MainWindow::handleFinished()
         setStatusString("Error in handleFinished");
         return;
     }
+
+    auto currentTime = std::chrono::system_clock::now();
+    auto const time = std::chrono::current_zone()->to_local(currentTime);
+    std::string timeString = std::format("Simulation finished at {:%Y-%m-%d %H-%M-%S}\n", time);
+    log(QString::fromStdString(timeString));
+    auto seconds = duration_cast<std::chrono::seconds>(currentTime - m_startTime);
+    timeString = std::format("Duration = {:.3f} hours\n", double(seconds.count()) / 3600);
+    log(QString::fromStdString(timeString));
+    m_startTime = std::chrono::system_clock::from_time_t(0);
+
     int result = m_tracker->exitCode();
     int exitStatus = m_tracker->exitStatus();
-    setStatusString(QString("handleFinished exitCode = %1 exitStatus = %2").arg(result).arg(exitStatus));
     delete m_tracker;
     m_tracker = nullptr;
     if (result == 0 && exitStatus == 0)
@@ -452,7 +481,7 @@ void MainWindow::handleFinished()
     }
     else
     {
-        setStatusString("Error after running MocoTrack");
+        setStatusString(QString("MocoTrack finished with exitCode = %1 exitStatus = %2").arg(result).arg(exitStatus));
     }
     setEnabled();
 }
@@ -486,16 +515,8 @@ void MainWindow::lookForMocoTrack()
             return;
         }
     }
-    QString fileName = QFileDialog::getOpenFileName(this, "Please choose the MocoTrack executable", startSearch, "Executable Files (*.exe);;All Files (*.*)");
-    if (fileName.size())
-    {
-        m_trackerExecutable = fileName;
-        settings.setValue("TrackerExecutable", m_trackerExecutable);
-        return;
-    }
-    setStatusString(QString("Startup Error: No MocoTrack executable found"));
-    QMessageBox::critical(this, "Startup Error", "No MocoTrack executable found");
-    return;
+    // nothing found so prompt the user
+    actionChooseMocoTrackExe();
 }
 
 void MainWindow::FindFiles(const QString &filename, const QString &path, QStringList *matchingFiles)

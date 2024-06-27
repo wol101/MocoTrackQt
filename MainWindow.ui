@@ -262,16 +262,17 @@
     <addaction name="separator"/>
     <addaction name="actionOutputFolder"/>
     <addaction name="separator"/>
-    <addaction name="actionRun"/>
-    <addaction name="actionStop"/>
-    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuAutomate">
     <property name="title">
-     <string>Automate</string>
+     <string>Process</string>
     </property>
+    <addaction name="actionRun"/>
+    <addaction name="actionStop"/>
     <addaction name="actionBatch"/>
+    <addaction name="separator"/>
+    <addaction name="actionChooseMocoTrack"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuAutomate"/>
@@ -304,12 +305,12 @@
   </action>
   <action name="actionChooseOSIMFile">
    <property name="text">
-    <string>Choose OSIM File...</string>
+    <string>OSIM File...</string>
    </property>
   </action>
   <action name="actionChooseTRCFile">
    <property name="text">
-    <string>Choose TRC File...</string>
+    <string>TRC File...</string>
    </property>
   </action>
   <action name="actionRun">
@@ -345,6 +346,14 @@
    </property>
    <property name="toolTip">
     <string>Run a process batch file</string>
+   </property>
+  </action>
+  <action name="actionChooseMocoTrack">
+   <property name="text">
+    <string>MocoTrack...</string>
+   </property>
+   <property name="toolTip">
+    <string>Choose the mocotrack executable to run</string>
    </property>
   </action>
  </widget>

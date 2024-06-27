@@ -1,11 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-
 #include <QMainWindow>
 #include <QBasicTimer>
 #include <QProcess>
-
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -28,6 +26,7 @@ public slots:
     void actionChooseOSIMFile();
     void actionOutputFolder();
     void actionBatch();
+    void actionChooseMocoTrackExe();
     void pushButtonAutofill();
     void textChangedTRCFile(const QString &text);
     void textChangedOSIMFile(const QString &text);
@@ -71,6 +70,8 @@ private:
 
     QProcess *m_tracker = nullptr;
     QString m_trackerExecutable;
+
+    std::chrono::time_point<std::chrono::system_clock> m_startTime = std::chrono::system_clock::from_time_t(0);
 
 };
 #endif // MAINWINDOW_H

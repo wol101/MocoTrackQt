@@ -14,6 +14,7 @@ if (CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
 endif ()
 add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 add_compile_definitions(_USE_MATH_DEFINES)
+add_compile_definitions(_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS)
 
 set(PROJECT_SOURCES
     ArgParse.cpp

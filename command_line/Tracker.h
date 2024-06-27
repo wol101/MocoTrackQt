@@ -1,12 +1,11 @@
 #ifndef TRACKER_H
 #define TRACKER_H
 
+#include <OpenSim/OpenSim.h>
+
 #include <string>
 #include <filesystem>
 
-namespace OpenSim {
-    class Model;
-}
 class Tracker
 {
 public:
@@ -64,7 +63,7 @@ private:
 
     std::string m_statesPath;
     std::string m_controlsPath;
-    OpenSim::Model *m_model = nullptr;
+    OpenSim::Model m_model;
 
     double m_startTime = 0;
     double m_endTime = 1.0;

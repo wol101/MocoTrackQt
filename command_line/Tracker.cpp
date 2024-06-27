@@ -183,12 +183,11 @@ std::string *Tracker::run()
     if (m_addReserves) modelProcessor.append(OpenSim::ModOpAddReserves(m_reservesOptimalForce));
 
     // save this model to the outputfolder
-    OpenSim::Model model = modelProcessor.process();
-    m_model = &model;
+    m_model = modelProcessor.process();
     std::string modelPath = pystring::os::path::join(outputFolder, "01_"s + m_experimentName + "_model.osim"s);
     try
     {
-        model.print(modelPath);
+        m_model.print(modelPath);
     }
     catch (...)
     {
@@ -264,15 +263,14 @@ std::string *Tracker::run()
     OpenSim::AnalyzeTool analyze(analyzePath);
     analyze.run();
 
-    m_model = nullptr; // because model is going out of scope
     return nullptr;
 }
 
 void Tracker::createAnalyzerXML(const std::string &filename)
 {
     XMLWriter xml(true);
-    xml.initiateTag("OpenSimDocument", {"Version", "40500"});
-    xml.initiateTag("AnalyzeTool", {"name"s, m_experimentName});
+    xml.initiateTag("OpenSimDocument", {{"Version", "40500"}});
+    xml.initiateTag("AnalyzeTool", {{"name", m_experimentName}});
 
     // preamble specifying the general analyses parameters
     xml.tagAndContent("model_file", m_osimFile);
@@ -290,11 +288,11 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     xml.tagAndContent("integrator_error_tolerance", "1e-05");
 
     // the analyses wanted
-    xml.initiateTag("AnalysisSet", {"name", "Analyses"});
+    xml.initiateTag("AnalysisSet", {{"name", "Analyses"}});
     xml.initiateTag("objects");
 
     // MuscleAnalysis
-    xml.initiateTag("MuscleAnalysis", {"name", "MuscleAnalysis"});
+    xml.initiateTag("MuscleAnalysis", {{"name", "MuscleAnalysis"}});
     xml.tagAndContent("on", "true");
     xml.tagAndContent("start_time", "-Inf");
     xml.tagAndContent("end_time", "Inf");
@@ -306,7 +304,7 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     xml.terminateTag("MuscleAnalysis");
 
     // ForceReporter
-    xml.initiateTag("ForceReporter", {"name", "ForceReporter"});
+    xml.initiateTag("ForceReporter", {{"name", "ForceReporter"}});
     xml.tagAndContent("on", "true");
     xml.tagAndContent("start_time", "-Inf");
     xml.tagAndContent("end_time", "Inf");
@@ -316,7 +314,7 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     xml.terminateTag("ForceReporter");
 
     // JointReaction
-    xml.initiateTag("JointReaction", {"name", "JointReaction"});
+    xml.initiateTag("JointReaction", {{"name", "JointReaction"}});
     xml.tagAndContent("on", "true");
     xml.tagAndContent("start_time", "-Inf");
     xml.tagAndContent("end_time", "Inf");
@@ -329,7 +327,7 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     xml.terminateTag("JointReaction");
 
     // Kinematics
-    xml.initiateTag("Kinematics", {"name", "Kinematics"});
+    xml.initiateTag("Kinematics", {{"name", "Kinematics"}});
     xml.tagAndContent("on", "true");
     xml.tagAndContent("start_time", "-Inf");
     xml.tagAndContent("end_time", "Inf");
@@ -338,7 +336,7 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     xml.terminateTag("Kinematics");
 
     // BodyKinematics
-    xml.initiateTag("BodyKinematics", {"name", "BodyKinematics"});
+    xml.initiateTag("BodyKinematics", {{"name", "BodyKinematics"}});
     xml.tagAndContent("on", "true");
     xml.tagAndContent("start_time", "-Inf");
     xml.tagAndContent("end_time", "Inf");
@@ -349,14 +347,14 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     xml.terminateTag("BodyKinematics");
 
     // PointKinematics - needs to be specified per point
-    for (int i = 0; m_model && i < m_model->getMarkerSet().getSize(); i++)
+    for (int i = 0; i < m_model.getMarkerSet().getSize(); i++)
     {
-        OpenSim::Marker marker = m_model->getMarkerSet().get(i);
+        OpenSim::Marker marker = m_model.getMarkerSet().get(i);
         std::string markerName = marker.getName();
         std::string parentName = marker.getParentFrameName();
         std::vector<std::string> parts = pystring::split(parentName, "/"s);
         const SimTK::Vec3 location = marker.get_location();
-        xml.initiateTag("PointKinematics", {"name", "PointKinematics"});
+        xml.initiateTag("PointKinematics", {{"name", "PointKinematics"}});
         xml.tagAndContent("on", "true");
         xml.tagAndContent("start_time", "-Inf");
         xml.tagAndContent("end_time", "Inf");
@@ -374,7 +372,7 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     xml.terminateTag("AnalysisSet");
 
     // the controls
-    xml.initiateTag("ControllerSet", {"name", "Controllers"});
+    xml.initiateTag("ControllerSet", {{"name", "Controllers"}});
     xml.initiateTag("objects");
     xml.initiateTag("PrescribedController");
     xml.tagAndContent("controls_file", m_controlsPath);

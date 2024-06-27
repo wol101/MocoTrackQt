@@ -85,13 +85,17 @@ MainWindow::MainWindow(QWidget *parent)
     }
     ui->toolButtonRunBatch->setIcon(m_iconList[0]);
 
-    // and this timer just makes sure that buttons are regularly updated
-    m_basicTimer.start(100, Qt::CoarseTimer, this);
-
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
 
     lookForMocoTrack();
+
+    // initialise the batch data
+    for (size_t i = 0; i < m_batchColumnHeadings.size(); i++) { m_batchData.push_back(std::vector<std::string>()); }
+
+    // and this timer just makes sure that buttons are regularly updated
+    m_basicTimer.start(100, Qt::CoarseTimer, this);
+
 }
 
 MainWindow::~MainWindow()
@@ -151,7 +155,7 @@ void MainWindow::basicTimer()
     if (m_timerCounter % 10) // so this will happen about once per second
     {
         // check whether we should be running something
-        if (!m_tracker && m_batchProcessingRunning)
+        if (!m_tracker && m_batchProcessingRunning && m_batchProcessingIndex < m_batchData[0].size())
         {
             Q_ASSERT(m_batchProcessingIndex < m_batchData[0].size());
             ui->lineEditExperimentName->setText(m_batchData[0][m_batchProcessingIndex].c_str());
@@ -165,10 +169,10 @@ void MainWindow::basicTimer()
             ui->lineEditGlobalWeight->setText(m_batchData[8][m_batchProcessingIndex].c_str());
             ui->lineEditConvergenceTolerance->setText(m_batchData[9][m_batchProcessingIndex].c_str());
             ui->lineEditConstraintTolerance->setText(m_batchData[10][m_batchProcessingIndex].c_str());
-            ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[10][m_batchProcessingIndex]));
+            ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[11][m_batchProcessingIndex]));
             bool addReserves, removeMuscles;
-            std::istringstream(m_batchData[11][m_batchProcessingIndex]) >> std::boolalpha >> addReserves;
-            std::istringstream(m_batchData[12][m_batchProcessingIndex]) >> std::boolalpha >> removeMuscles;
+            std::istringstream(m_batchData[12][m_batchProcessingIndex]) >> std::boolalpha >> addReserves;
+            std::istringstream(m_batchData[13][m_batchProcessingIndex]) >> std::boolalpha >> removeMuscles;
             ui->checkBoxAddReserves->setChecked(addReserves);
             ui->checkBoxRemoveMuscles->setChecked(removeMuscles);
             actionRun();
@@ -209,6 +213,7 @@ void MainWindow::actionRun()
     }
     catch (const std::runtime_error& ex)
     {
+        m_batchProcessingRunning = false;
         setStatusString(QString("Run Error: ") + QString::fromStdString(ex.what()));
         QMessageBox::critical(this, "Run Error", QString::fromStdString(ex.what()));
         return;
@@ -249,6 +254,7 @@ void MainWindow::actionRun()
     m_tracker->start(program, arguments, QIODeviceBase::ReadWrite | QIODeviceBase::Unbuffered);
     if (m_tracker->waitForStarted(10000) == false)
     {
+        m_batchProcessingRunning = false;
         m_tracker->kill();
         delete m_tracker;
         m_tracker = nullptr;
@@ -372,10 +378,12 @@ void MainWindow::toolButtonRunBatch()
     try
     {
         if (!(checkReadFile(m_batchFile))) throw std::runtime_error(m_batchFile + " cannot be read");
-        readTabDelimitedFile(m_batchFile, &m_batchColumnHeadings, &m_batchData);
-        if (m_batchColumnHeadings.size() == 0 || m_batchData.size() == 0) throw std::runtime_error(m_batchFile + " contains no data");
-        const static std::vector<std::string> headingsRequired = {"RunID","OSIMFile","TRCFile","OutputFolder","MarkerWeights","StartTime","EndTime","ReserveForce","GlobalWeight","ConvergeTol","ConstraintTol","MeshIntervals","AddReserves","RemoveMuscles"};
-        if (m_batchColumnHeadings != headingsRequired) throw std::runtime_error(m_batchFile + " column heading mismatch");
+        std::vector<std::string> columnHeadings;
+        std::vector<std::vector<std::string>> data;
+        readTabDelimitedFile(m_batchFile, &columnHeadings, &data);
+        if (columnHeadings.size() == 0 || data.size() == 0) throw std::runtime_error(m_batchFile + " contains no data");
+        if (m_batchColumnHeadings != columnHeadings) throw std::runtime_error(m_batchFile + " column heading mismatch");
+        m_batchData = data;
         m_batchProcessingIndex = 0;
         m_batchProcessingRunning = true;
         setEnabled();
@@ -633,7 +641,7 @@ void MainWindow::readTabDelimitedFile(const std::string &filename, std::vector<s
     if (lines.size() == 0) return;
     *columnHeadings = pystring::split(lines[0], "\t");
     if (columnHeadings->size() == 0) return;
-    for (size_t i = 1; i < columnHeadings->size(); i++)
+    for (size_t i = 0; i < columnHeadings->size(); i++)
     {
         data->push_back(std::vector<std::string>());
     }

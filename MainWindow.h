@@ -78,7 +78,7 @@ private:
     QVector<QIcon> m_iconList;
     int m_iconListIndex = 0;
     std::string m_batchFile;
-    std::vector<std::string> m_batchColumnHeadings;
+    std::vector<std::string> m_batchColumnHeadings = {"RunID","OSIMFile","TRCFile","OutputFolder","MarkerWeights","StartTime","EndTime","ReserveForce","GlobalWeight","ConvergeTol","ConstraintTol","MeshIntervals","AddReserves","RemoveMuscles"};;
     std::vector<std::vector<std::string>> m_batchData;
     size_t m_batchProcessingIndex = 0;
     bool m_batchProcessingRunning = false;

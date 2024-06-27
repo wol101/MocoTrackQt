@@ -179,7 +179,7 @@
        <item row="0" column="2">
         <widget class="QLabel" name="label_4">
          <property name="text">
-          <string>Reserves Force</string>
+          <string>Reserve Force</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

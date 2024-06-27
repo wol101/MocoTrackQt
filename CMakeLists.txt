@@ -107,6 +107,8 @@ if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(MocoTrackQt)
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL Release) # for release builds make sure all the dlls are in place
+
 add_custom_command(TARGET MocoTrackQt POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/SimTKcommon.dll" ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy "C:/Program Files/OpenSim 4.5/bin/SimTKmath.dll" ${CMAKE_CURRENT_BINARY_DIR}
@@ -165,8 +167,10 @@ add_custom_command(TARGET MocoTrackQt POST_BUILD
     # COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_PREFIX_PATH}/bin/Qt6Core.dll" ${CMAKE_CURRENT_BINARY_DIR}
     # COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_PREFIX_PATH}/plugins" "${CMAKE_CURRENT_BINARY_DIR}/plugins"
 
-    COMMAND "${CMAKE_PREFIX_PATH}/bin/windeployqt.exe" "${CMAKE_CURRENT_BINARY_DIR}/MocoTrackQt.exe"
+    COMMAND "${CMAKE_PREFIX_PATH}/bin/windeployqt.exe" "${CMAKE_CURRENT_BINARY_DIR}/MocoTrackQt.exe" # this copies the Qt dlls and a fairly minimal set of plugins
 )
+
+endif()
 
 function(dump_cmake_variables)
     get_cmake_property(_variableNames VARIABLES)

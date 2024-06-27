@@ -1,4 +1,5 @@
 #include "Tracker.h"
+#include "XMLWriter.h"
 
 #include "pystring/pystring.h"
 
@@ -183,6 +184,7 @@ std::string *Tracker::run()
 
     // save this model to the outputfolder
     OpenSim::Model model = modelProcessor.process();
+    m_model = &model;
     std::string modelPath = pystring::os::path::join(outputFolder, "01_"s + m_experimentName + "_model.osim"s);
     try
     {
@@ -251,77 +253,149 @@ std::string *Tracker::run()
     }
 
     // output the required state and control files
-    std::string statesPath = pystring::os::path::join(outputFolder, "02_"s + m_experimentName + "_states.sto"s);
-    OpenSim::STOFileAdapter::write(mocoSolution.exportToStatesTable(), statesPath);
-    std::string controlsPath = pystring::os::path::join(outputFolder, "03_"s + m_experimentName + "_controls.sto"s);
-    OpenSim::STOFileAdapter::write(mocoSolution.exportToControlsTable(), controlsPath);
+    m_statesPath = pystring::os::path::join(outputFolder, "02_"s + m_experimentName + "_states.sto"s);
+    OpenSim::STOFileAdapter::write(mocoSolution.exportToStatesTable(), m_statesPath);
+    m_controlsPath = pystring::os::path::join(outputFolder, "03_"s + m_experimentName + "_controls.sto"s);
+    OpenSim::STOFileAdapter::write(mocoSolution.exportToControlsTable(), m_controlsPath);
 
     // now run some analyses to get the data we actually want
-    OpenSim::AnalyzeTool analyzeSetup;
-    analyzeSetup.setName(m_experimentName);
-    analyzeSetup.setModelFilename(modelPath);
-    analyzeSetup.setStatesFileName(statesPath);
-    analyzeSetup.setResultsDir(outputFolder);
-    analyzeSetup.setInitialTime(m_startTime);
-    analyzeSetup.setFinalTime(m_endTime);
-
-    auto muscleAnalysis = new OpenSim::MuscleAnalysis();
-    auto forceReporter = new OpenSim::ForceReporter();
-    auto jointReaction = new OpenSim::JointReaction();
-    auto kinematics = new OpenSim::Kinematics();
-    auto bodyKinematics = new OpenSim::BodyKinematics();
-
-    jointReaction->setName("JointReaction"); // doesn't seem to get set properly elsewhere
-
-    analyzeSetup.updAnalysisSet().adoptAndAppend(muscleAnalysis);
-    analyzeSetup.updAnalysisSet().adoptAndAppend(forceReporter);
-    analyzeSetup.updAnalysisSet().adoptAndAppend(jointReaction);
-    analyzeSetup.updAnalysisSet().adoptAndAppend(kinematics);
-    analyzeSetup.updAnalysisSet().adoptAndAppend(bodyKinematics);
-    analyzeSetup.updControllerSet().adoptAndAppend(new OpenSim::PrescribedController(controlsPath));
     std::string analyzePath = pystring::os::path::join(outputFolder, "04_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
-    analyzeSetup.print(analyzePath);
-
-    // PointKinematics does not seem to work as I expect so this is a hack to insert the PointKinematic analysis in the right place
-    std::ifstream fi(analyzePath, std::ios::in); // | std::ios::binary);
-    const auto sz = std::filesystem::file_size(analyzePath);
-    std::string result(sz, '\0');
-    fi.read(result.data(), sz);
-    fi.close();
-    size_t analysisSetEnd = result.rfind("</AnalysisSet>");
-    size_t analysisSetEndObjects = result.rfind("</objects>", analysisSetEnd);
-
-    // need to do some work for the point reporter
-    std::vector<std::string> newXML;
-    for (int i = 0; i < model.getMarkerSet().getSize(); i++)
-    {
-        auto marker = model.getMarkerSet().get(i);
-        auto markerName = marker.getName();
-        auto parentName = marker.getParentFrameName();
-        std::vector<std::string> parts = pystring::split(parentName, "/"s);
-        auto location = marker.get_location();
-        newXML.push_back("<PointKinematics name=\""s + markerName + "\">"s);
-        newXML.push_back("<on>true</on>"s);
-        newXML.push_back("<start_time>-Inf</start_time>"s);
-        newXML.push_back("<end_time>+Inf</end_time>"s);
-        newXML.push_back("<step_interval>1</step_interval>"s);
-        newXML.push_back("<in_degrees>1</in_degrees>"s);
-        newXML.push_back("<body_name>"s + parts.back() + "</body_name>"s);
-        newXML.push_back("<relative_to_body_name>ground</relative_to_body_name>"s);
-        newXML.push_back("<point_name>"s + markerName + "</point_name>"s);
-        newXML.push_back("<point>"s + std::to_string(location[0]) + " "s + std::to_string(location[1]) + " "s + std::to_string(location[2]) + "</point>");
-        newXML.push_back("</PointKinematics>"s);
-    }
-    std::ofstream fo(analyzePath, std::ios::out);
-    fo.write(result.data(), analysisSetEndObjects);
-    std::string newXMLStr = pystring::join("\n"s, newXML);
-    fo.write(newXMLStr.data(), newXMLStr.size());
-    fo.write(&result[analysisSetEndObjects], result.size() - analysisSetEndObjects);
-    fo.close();
-
-    OpenSim::AnalyzeTool analyze(analyzePath); // not sure why this needs to be a separate instance but that is how it is done in the examples
+    createAnalyzerXML(analyzePath);
+    OpenSim::AnalyzeTool analyze(analyzePath);
     analyze.run();
 
+    m_model = nullptr; // because model is going out of scope
     return nullptr;
+}
+
+void Tracker::createAnalyzerXML(const std::string &filename)
+{
+    XMLWriter xml(true);
+    xml.initiateTag("OpenSimDocument", {"Version", "40500"});
+    xml.initiateTag("AnalyzeTool", {"name"s, m_experimentName});
+
+    // preamble specifying the general analyses parameters
+    xml.tagAndContent("model_file", m_osimFile);
+    xml.tagAndContent("replace_force_set", "false");
+    xml.tagAndContent("force_set_files");
+    xml.appendText("1");
+    xml.tagAndContent("results_directory", m_outputFolder);
+    xml.tagAndContent("output_precision", "8");
+    xml.tagAndContent("initial_time", std::format("{:.17g}", m_startTime));
+    xml.tagAndContent("final_time", std::format("{:.17g}", m_endTime));
+    xml.tagAndContent("solve_for_equilibrium_for_auxiliary_states", "false");
+    xml.tagAndContent("maximum_number_of_integrator_steps", "2000");
+    xml.tagAndContent("maximum_integrator_step_size", "1");
+    xml.tagAndContent("minimum_integrator_step_size", "1e-08");
+    xml.tagAndContent("integrator_error_tolerance", "1e-05");
+
+    // the analyses wanted
+    xml.initiateTag("AnalysisSet", {"name", "Analyses"});
+    xml.initiateTag("objects");
+
+    // MuscleAnalysis
+    xml.initiateTag("MuscleAnalysis", {"name", "MuscleAnalysis"});
+    xml.tagAndContent("on", "true");
+    xml.tagAndContent("start_time", "-Inf");
+    xml.tagAndContent("end_time", "Inf");
+    xml.tagAndContent("step_interval", "1");
+    xml.tagAndContent("in_degrees", "true");
+    xml.tagAndContent("muscle_list", "all");
+    xml.tagAndContent("moment_arm_coordinate_list", "all");
+    xml.tagAndContent("compute_moments", "true");
+    xml.terminateTag("MuscleAnalysis");
+
+    // ForceReporter
+    xml.initiateTag("ForceReporter", {"name", "ForceReporter"});
+    xml.tagAndContent("on", "true");
+    xml.tagAndContent("start_time", "-Inf");
+    xml.tagAndContent("end_time", "Inf");
+    xml.tagAndContent("step_interval", "1");
+    xml.tagAndContent("in_degrees", "true");
+    xml.tagAndContent("include_constraint_forces", "true");
+    xml.terminateTag("ForceReporter");
+
+    // JointReaction
+    xml.initiateTag("JointReaction", {"name", "JointReaction"});
+    xml.tagAndContent("on", "true");
+    xml.tagAndContent("start_time", "-Inf");
+    xml.tagAndContent("end_time", "Inf");
+    xml.tagAndContent("step_interval", "1");
+    xml.tagAndContent("in_degrees", "true");
+    xml.tagAndContent("forces_file");
+    xml.tagAndContent("joint_names", "all");
+    xml.tagAndContent("apply_on_bodies", "child");
+    xml.tagAndContent("express_in_frame", "ground");
+    xml.terminateTag("JointReaction");
+
+    // Kinematics
+    xml.initiateTag("Kinematics", {"name", "Kinematics"});
+    xml.tagAndContent("on", "true");
+    xml.tagAndContent("start_time", "-Inf");
+    xml.tagAndContent("end_time", "Inf");
+    xml.tagAndContent("step_interval", "1");
+    xml.tagAndContent("in_degrees", "true");
+    xml.terminateTag("Kinematics");
+
+    // BodyKinematics
+    xml.initiateTag("BodyKinematics", {"name", "BodyKinematics"});
+    xml.tagAndContent("on", "true");
+    xml.tagAndContent("start_time", "-Inf");
+    xml.tagAndContent("end_time", "Inf");
+    xml.tagAndContent("step_interval", "1");
+    xml.tagAndContent("in_degrees", "true");
+    xml.tagAndContent("bodies", "all");
+    xml.tagAndContent("express_results_in_body_local_frame", "false");
+    xml.terminateTag("BodyKinematics");
+
+    // PointKinematics - needs to be specified per point
+    for (int i = 0; m_model && i < m_model->getMarkerSet().getSize(); i++)
+    {
+        OpenSim::Marker marker = m_model->getMarkerSet().get(i);
+        std::string markerName = marker.getName();
+        std::string parentName = marker.getParentFrameName();
+        std::vector<std::string> parts = pystring::split(parentName, "/"s);
+        const SimTK::Vec3 location = marker.get_location();
+        xml.initiateTag("PointKinematics", {"name", "PointKinematics"});
+        xml.tagAndContent("on", "true");
+        xml.tagAndContent("start_time", "-Inf");
+        xml.tagAndContent("end_time", "Inf");
+        xml.tagAndContent("step_interval", "1");
+        xml.tagAndContent("in_degrees", "true");
+        xml.tagAndContent("body_name", parts.back());
+        xml.tagAndContent("relative_to_body_name", "ground");
+        xml.tagAndContent("point_name", markerName);
+        xml.tagAndContent("point", std::format("{:.17g} {:.17g} {:.17g}", location[0], location[1], location[2]));
+        xml.terminateTag("PointKinematics");
+    }
+
+    xml.terminateTag("objects");
+    xml.tagAndContent("groups");
+    xml.terminateTag("AnalysisSet");
+
+    // the controls
+    xml.initiateTag("ControllerSet", {"name", "Controllers"});
+    xml.initiateTag("objects");
+    xml.initiateTag("PrescribedController");
+    xml.tagAndContent("controls_file", m_controlsPath);
+    xml.tagAndContent("interpolation_method", "1");
+    xml.terminateTag("PrescribedController");
+    xml.terminateTag("objects");
+    xml.tagAndContent("groups");
+    xml.terminateTag("ControllerSet");
+
+    // postscript extras
+    xml.tagAndContent("external_loads_file");
+    xml.tagAndContent("states_file", m_statesPath);
+    xml.tagAndContent("coordinates_file");
+    xml.tagAndContent("speeds_file");
+    xml.tagAndContent("lowpass_cutoff_frequency_for_coordinates", "-1");
+
+    xml.terminateTag("AnalyzeTool");
+    xml.terminateTag("OpenSimDocument");
+
+    std::ofstream outputFile(filename);
+    outputFile << xml.xmlString();
+    outputFile.close();
 }
 

@@ -20,13 +20,15 @@ set(PROJECT_SOURCES
     ArgParse.h
     Tracker.cpp
     Tracker.h
+    XMLWriter.cpp
+    XMLWriter.h
     main.cpp
     ../pystring/pystring.cpp
     ../pystring/pystring.h
 )
 
 add_executable(mocotrack
-    ${PROJECT_SOURCES}    
+    ${PROJECT_SOURCES}
 )
 
 target_include_directories(mocotrack PRIVATE

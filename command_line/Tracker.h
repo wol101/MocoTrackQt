@@ -4,6 +4,9 @@
 #include <string>
 #include <filesystem>
 
+namespace OpenSim {
+    class Model;
+}
 class Tracker
 {
 public:
@@ -52,11 +55,16 @@ public:
     void setConstraintTolerance(double newConstraintTolerance);
 
 private:
+    void createAnalyzerXML(const std::string &filename);
 
     std::string m_trcFile;
     std::string m_osimFile;
     std::string m_outputFolder;
     std::string m_experimentName;
+
+    std::string m_statesPath;
+    std::string m_controlsPath;
+    OpenSim::Model *m_model = nullptr;
 
     double m_startTime = 0;
     double m_endTime = 1.0;

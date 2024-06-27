@@ -24,14 +24,15 @@ public slots:
     void actionStop();
     void actionChooseTRCFile();
     void actionChooseOSIMFile();
-    void actionOutputFolder();
-    void actionBatch();
+    void actionChooseOutputFolder();
+    void actionChooseBatchFile();
     void actionChooseMocoTrackExe();
     void pushButtonAutofill();
     void textChangedTRCFile(const QString &text);
     void textChangedOSIMFile(const QString &text);
     void textChangedOutputFolder(const QString &text);
     void textChangedExperimentName(const QString &text);
+    void toolButtonRunBatch();
 
 private slots:
     void readStandardError();
@@ -52,7 +53,7 @@ private:
 
     static void FindFiles(const QString &filename, const QString &path, QStringList *matchingFiles);
 
-    static bool checkReadFile(const std::string &filename, bool checkExecutable);
+    static bool checkReadFile(const std::string &filename, bool checkExecutable = false);
     static bool checkReadFolder(const std::string &foldername);
     static bool checkWriteFile(const std::string &filename);
     static bool checkWriteFolder(const std::string &foldername);
@@ -60,6 +61,7 @@ private:
     static bool checkReadFolder(const QString &foldername);
     static bool checkWriteFile(const QString &filename);
     static bool checkWriteFolder(const QString &foldername);
+    static void readTabDelimitedFile(const std::string &filename, std::vector<std::string> *columnHeadings, std::vector<std::vector<std::string>> *data);
 
     Ui::MainWindow *ui;
 
@@ -73,8 +75,13 @@ private:
     QString m_trackerExecutable;
 
     std::chrono::time_point<std::chrono::system_clock> m_startTime = std::chrono::system_clock::from_time_t(0);
-    bool m_batchProcessing = false;
     QVector<QIcon> m_iconList;
     int m_iconListIndex = 0;
+    std::string m_batchFile;
+    std::vector<std::string> m_batchColumnHeadings;
+    std::vector<std::vector<std::string>> m_batchData;
+    size_t m_batchProcessingIndex = 0;
+    bool m_batchProcessingRunning = false;
+
 };
 #endif // MAINWINDOW_H

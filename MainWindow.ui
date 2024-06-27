@@ -87,7 +87,7 @@
         </widget>
        </item>
        <item row="0" column="1" rowspan="2">
-        <widget class="QToolButton" name="toolButtonBatch">
+        <widget class="QToolButton" name="toolButtonRunBatch">
          <property name="text">
           <string>...</string>
          </property>
@@ -161,7 +161,7 @@
         </widget>
        </item>
        <item row="1" column="2">
-        <widget class="LineEditDouble" name="lineEditReservesForce"/>
+        <widget class="LineEditDouble" name="lineEditReserveForce"/>
        </item>
        <item row="0" column="5">
         <widget class="QLabel" name="label_7">
@@ -279,8 +279,9 @@
     </property>
     <addaction name="actionChooseOSIMFile"/>
     <addaction name="actionChooseTRCFile"/>
+    <addaction name="actionChooseBatchFile"/>
     <addaction name="separator"/>
-    <addaction name="actionOutputFolder"/>
+    <addaction name="actionChooseOutputFolder"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -290,9 +291,8 @@
     </property>
     <addaction name="actionRun"/>
     <addaction name="actionStop"/>
-    <addaction name="actionBatch"/>
     <addaction name="separator"/>
-    <addaction name="actionChooseMocoTrack"/>
+    <addaction name="actionChooseMocoTrackExe"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuAutomate"/>
@@ -344,7 +344,7 @@
     <enum>QAction::TextHeuristicRole</enum>
    </property>
   </action>
-  <action name="actionOutputFolder">
+  <action name="actionChooseOutputFolder">
    <property name="text">
     <string>Output Folder...</string>
    </property>
@@ -360,15 +360,15 @@
     <string>Stop the simulation</string>
    </property>
   </action>
-  <action name="actionBatch">
+  <action name="actionChooseBatchFile">
    <property name="text">
-    <string>Batch...</string>
+    <string>Batch File...</string>
    </property>
    <property name="toolTip">
-    <string>Run a process batch file</string>
+    <string>Choose a process batch file</string>
    </property>
   </action>
-  <action name="actionChooseMocoTrack">
+  <action name="actionChooseMocoTrackExe">
    <property name="text">
     <string>MocoTrack...</string>
    </property>
@@ -398,7 +398,7 @@
   <tabstop>plainTextEditOutput</tabstop>
   <tabstop>lineEditStartTime</tabstop>
   <tabstop>lineEditEndTime</tabstop>
-  <tabstop>lineEditReservesForce</tabstop>
+  <tabstop>lineEditReserveForce</tabstop>
   <tabstop>lineEditGlobalWeight</tabstop>
   <tabstop>lineEditConvergenceTolerance</tabstop>
   <tabstop>lineEditConstraintTolerance</tabstop>

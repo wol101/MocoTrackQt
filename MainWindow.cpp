@@ -3,12 +3,16 @@
 
 #include "LineEditDouble.h"
 
+#include "pystring/pystring.h"
+
 #include <QFileDialog>
 #include <QSettings>
 #include <QMessageBox>
 
 #include <thread>
-#include <chrono>>
+#include <chrono>
+#include <fstream>
+#include <sstream>
 
 using namespace std::chrono_literals;
 
@@ -34,12 +38,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionStop, &QAction::triggered, this, &MainWindow::actionStop);
     connect(ui->actionChooseOSIMFile, &QAction::triggered, this, &MainWindow::actionChooseOSIMFile);
     connect(ui->actionChooseTRCFile, &QAction::triggered, this, &MainWindow::actionChooseTRCFile);
-    connect(ui->actionOutputFolder, &QAction::triggered, this, &MainWindow::actionOutputFolder);
-    connect(ui->actionBatch, &QAction::triggered, this, &MainWindow::actionBatch);
-    connect(ui->actionChooseMocoTrack, &QAction::triggered, this, &MainWindow::actionChooseMocoTrackExe);
+    connect(ui->actionChooseOutputFolder, &QAction::triggered, this, &MainWindow::actionChooseOutputFolder);
+    connect(ui->actionChooseBatchFile, &QAction::triggered, this, &MainWindow::actionChooseBatchFile);
+    connect(ui->actionChooseMocoTrackExe, &QAction::triggered, this, &MainWindow::actionChooseMocoTrackExe);
     connect(ui->pushButtonOSIMFile, &QPushButton::clicked, this, &MainWindow::actionChooseOSIMFile);
     connect(ui->pushButtonTRCFile, &QPushButton::clicked, this, &MainWindow::actionChooseTRCFile);
-    connect(ui->pushButtonOutputFolder, &QPushButton::clicked, this, &MainWindow::actionOutputFolder);
+    connect(ui->pushButtonOutputFolder, &QPushButton::clicked, this, &::MainWindow::actionChooseOutputFolder);
     connect(ui->pushButtonRun, &QPushButton::clicked, this, &MainWindow::actionRun);
     connect(ui->pushButtonStop, &QPushButton::clicked, this, &MainWindow::actionStop);
     connect(ui->pushButtonAutofill, &QPushButton::clicked, this, &MainWindow::pushButtonAutofill);
@@ -47,12 +51,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->lineEditTRCFile, &QLineEdit::textChanged, this, &MainWindow::textChangedTRCFile);
     connect(ui->lineEditOutputFolder, &QLineEdit::textChanged, this, &MainWindow::textChangedOutputFolder);
     connect(ui->lineEditExperimentName, &QLineEdit::textChanged, this, &MainWindow::textChangedExperimentName);
+    connect(ui->toolButtonRunBatch, &QPushButton::clicked, this, &MainWindow::toolButtonRunBatch);
 
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
     ui->lineEditExperimentName->setText(settings.value("ExperimentName", "").toString());
     ui->lineEditOSIMFile->setText(settings.value("OSIMFile", "").toString());
     ui->lineEditTRCFile->setText(settings.value("TRCFile", "").toString());
     ui->lineEditOutputFolder->setText(settings.value("OutputFolder", "").toString());
+    m_batchFile = settings.value("BatchFile", "").toString().toStdString();
 
     auto children = findChildren<LineEditDouble *>();
     for (auto &&it : children)
@@ -63,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEditStartTime->setBottom(0);
     ui->lineEditStartTime->setValue(settings.value("StartTime", "0").toDouble());
     ui->lineEditEndTime->setValue(settings.value("EndTime", "1").toDouble());
-    ui->lineEditReservesForce->setValue(settings.value("ReservesForce", "100").toDouble());
+    ui->lineEditReserveForce->setValue(settings.value("ReservesForce", "100").toDouble());
     ui->lineEditGlobalWeight->setValue(settings.value("GlobalWeight", "10").toDouble());
     ui->lineEditConstraintTolerance->setValue(settings.value("ConstraintTolerance", "1e-4").toDouble());
     ui->lineEditConvergenceTolerance->setValue(settings.value("ConvergenceTolerance", "1e-3").toDouble());
@@ -77,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
     {
         m_iconList.push_back(QIcon(QString(":/images/running_icon%1.svg").arg(i)));
     }
-    ui->toolButtonBatch->setIcon(m_iconList[0]);
+    ui->toolButtonRunBatch->setIcon(m_iconList[0]);
 
     // and this timer just makes sure that buttons are regularly updated
     m_basicTimer.start(100, Qt::CoarseTimer, this);
@@ -109,7 +115,7 @@ void MainWindow::closeEvent (QCloseEvent *event)
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
     settings.setValue("StartTime", ui->lineEditStartTime->value());
     settings.setValue("EndTime", ui->lineEditEndTime->value());
-    settings.setValue("ReservesForce", ui->lineEditReservesForce->value());
+    settings.setValue("ReservesForce", ui->lineEditReserveForce->value());
     settings.setValue("GlobalWeight", ui->lineEditGlobalWeight->value());
     settings.setValue("ConstraintTolerance", ui->lineEditConstraintTolerance->value());
     settings.setValue("ConvergenceTolerance", ui->lineEditConvergenceTolerance->value());
@@ -133,17 +139,42 @@ void MainWindow::basicTimer()
     // this is triggered every 100ms (approximately)
     ++m_timerCounter;
 
-    if (m_batchProcessing)
+    if (m_batchProcessingRunning)
     {
         // animate the icon
-        ui->toolButtonBatch->setIcon(m_iconList[m_iconListIndex]);
-        ui->toolButtonBatch->repaint();
+        ui->toolButtonRunBatch->setIcon(m_iconList[m_iconListIndex]);
+        ui->toolButtonRunBatch->repaint();
         ++m_iconListIndex;
         if (m_iconListIndex >= m_iconList.size()) m_iconListIndex = 0;
     }
 
     if (m_timerCounter % 10) // so this will happen about once per second
     {
+        // check whether we should be running something
+        if (!m_tracker && m_batchProcessingRunning)
+        {
+            Q_ASSERT(m_batchProcessingIndex < m_batchData[0].size());
+            ui->lineEditExperimentName->setText(m_batchData[0][m_batchProcessingIndex].c_str());
+            ui->lineEditOSIMFile->setText(m_batchData[1][m_batchProcessingIndex].c_str());
+            ui->lineEditTRCFile->setText(m_batchData[2][m_batchProcessingIndex].c_str());
+            ui->lineEditOutputFolder->setText(m_batchData[3][m_batchProcessingIndex].c_str());
+            // m_batchData[4][m_batchProcessingIndex].c_str() is MarkerWeights
+            ui->lineEditStartTime->setText(m_batchData[5][m_batchProcessingIndex].c_str());
+            ui->lineEditEndTime->setText(m_batchData[6][m_batchProcessingIndex].c_str());
+            ui->lineEditReserveForce->setText(m_batchData[7][m_batchProcessingIndex].c_str());
+            ui->lineEditGlobalWeight->setText(m_batchData[8][m_batchProcessingIndex].c_str());
+            ui->lineEditConvergenceTolerance->setText(m_batchData[9][m_batchProcessingIndex].c_str());
+            ui->lineEditConstraintTolerance->setText(m_batchData[10][m_batchProcessingIndex].c_str());
+            ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[10][m_batchProcessingIndex]));
+            bool addReserves, removeMuscles;
+            std::istringstream(m_batchData[11][m_batchProcessingIndex]) >> std::boolalpha >> addReserves;
+            std::istringstream(m_batchData[12][m_batchProcessingIndex]) >> std::boolalpha >> removeMuscles;
+            ui->checkBoxAddReserves->setChecked(addReserves);
+            ui->checkBoxRemoveMuscles->setChecked(removeMuscles);
+            actionRun();
+            ++m_batchProcessingIndex;
+        }
+
         // check the controls
         setEnabled();
     }
@@ -159,7 +190,7 @@ void MainWindow::actionRun()
     QString experimentName = ui->lineEditExperimentName->text();
     double startTime = ui->lineEditStartTime->value();
     double endTime = ui->lineEditEndTime->value();
-    double reservesForce = ui->lineEditReservesForce->value();
+    double reservesForce = ui->lineEditReserveForce->value();
     double globalWeight = ui->lineEditGlobalWeight->value();
     double constraintTolerance = ui->lineEditConstraintTolerance->value();
     double convergenceTolerance = ui->lineEditConvergenceTolerance->value();
@@ -237,8 +268,16 @@ void MainWindow::actionStop()
     std::this_thread::sleep_for(5000ms);
 }
 
-void MainWindow::actionBatch()
+void MainWindow::actionChooseBatchFile()
 {
+    QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
+    QString lastFile = settings.value("BatchFile", "").toString();
+    QString fileName = QFileDialog::getOpenFileName(this, "Open batch file", lastFile, "Batch Files (*.tab *.txt);;All Files (*.*)");
+    if (fileName.size())
+    {
+        m_batchFile = fileName.toStdString();
+        settings.setValue("BatchFile", fileName);
+    }
 }
 
 void MainWindow::pushButtonAutofill()
@@ -276,7 +315,7 @@ void MainWindow::actionChooseTRCFile()
     }
 }
 
-void MainWindow::actionOutputFolder()
+void MainWindow::actionChooseOutputFolder()
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
     QString lastFolder = settings.value("OutputFolder", "").toString();
@@ -327,6 +366,28 @@ void MainWindow::textChangedExperimentName(const QString &text)
     setEnabled();
 }
 
+void MainWindow::toolButtonRunBatch()
+{
+    Q_ASSERT(m_batchProcessingRunning == false);
+    try
+    {
+        if (!(checkReadFile(m_batchFile))) throw std::runtime_error(m_batchFile + " cannot be read");
+        readTabDelimitedFile(m_batchFile, &m_batchColumnHeadings, &m_batchData);
+        if (m_batchColumnHeadings.size() == 0 || m_batchData.size() == 0) throw std::runtime_error(m_batchFile + " contains no data");
+        const static std::vector<std::string> headingsRequired = {"RunID","OSIMFile","TRCFile","OutputFolder","MarkerWeights","StartTime","EndTime","ReserveForce","GlobalWeight","ConvergeTol","ConstraintTol","MeshIntervals","AddReserves","RemoveMuscles"};
+        if (m_batchColumnHeadings != headingsRequired) throw std::runtime_error(m_batchFile + " column heading mismatch");
+        m_batchProcessingIndex = 0;
+        m_batchProcessingRunning = true;
+        setEnabled();
+    }
+    catch (const std::runtime_error& ex)
+    {
+        setStatusString(QString("Run Batch Error: ") + QString::fromStdString(ex.what()));
+        QMessageBox::critical(this, "Run Batch Error", QString::fromStdString(ex.what()));
+        return;
+    }
+}
+
 void MainWindow::setEnabled()
 {
     if (m_tracker) // it is running so most things need to be disabled
@@ -362,6 +423,7 @@ void MainWindow::setEnabled()
         for (auto &&action : actionList) action->setEnabled(true);
         ui->actionStop->setEnabled(false);
         ui->pushButtonStop->setEnabled(false);
+        ui->toolButtonRunBatch->setEnabled(m_batchProcessingRunning == false && checkReadFile(m_batchFile));
     }
 }
 
@@ -495,6 +557,11 @@ void MainWindow::handleFinished()
     int result = m_tracker->exitCode();
     int exitStatus = m_tracker->exitStatus();
     delete m_tracker;
+    if (m_batchProcessingRunning && m_batchProcessingIndex >= m_batchData[0].size())
+    {
+        m_batchProcessingRunning = false;
+        m_batchProcessingIndex = 0;
+    }
     m_tracker = nullptr;
     if (result == 0 && exitStatus == 0)
     {
@@ -504,6 +571,8 @@ void MainWindow::handleFinished()
     {
         setStatusString(QString("MocoTrack finished with exitCode = %1 exitStatus = %2").arg(result).arg(exitStatus));
     }
+    m_iconListIndex = 0;
+    ui->toolButtonRunBatch->setIcon(m_iconList[m_iconListIndex]);
     setEnabled();
 }
 
@@ -548,5 +617,35 @@ void MainWindow::FindFiles(const QString &filename, const QString &path, QString
     {
         if (item.isDir()) { FindFiles(filename, item.fileName(), matchingFiles); }
         else { if (filename == item.fileName()) matchingFiles->append(dir.absoluteFilePath(item.fileName())); }
+    }
+}
+
+void MainWindow::readTabDelimitedFile(const std::string &filename, std::vector<std::string> *columnHeadings, std::vector<std::vector<std::string>> *data)
+{
+    columnHeadings->clear();
+    data->clear();
+    std::ifstream file(filename);
+    if (!file) return;
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    file.close();
+    std::vector<std::string> lines = pystring::splitlines(buffer.str());
+    if (lines.size() == 0) return;
+    *columnHeadings = pystring::split(lines[0], "\t");
+    if (columnHeadings->size() == 0) return;
+    for (size_t i = 1; i < columnHeadings->size(); i++)
+    {
+        data->push_back(std::vector<std::string>());
+    }
+    std::vector<std::string> tokens;
+    for (size_t i = 1; i < lines.size(); i++)
+    {
+        tokens = pystring::split(lines[i], "\t");
+        if (tokens.size() == 0) continue; // skip blank lines
+        for (size_t j = 0; j < columnHeadings->size(); j++)
+        {
+            if (j < tokens.size()) { (*data)[j].push_back(tokens[j]); }
+            else { (*data)[j].push_back(""); } // pad any lines that are incomplete
+        }
     }
 }

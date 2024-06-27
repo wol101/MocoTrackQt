@@ -1,5 +1,17 @@
 <RCC>
     <qresource prefix="/">
-        <file>images/running_icon.svg</file>
+    <file>images/running_icon.svg</file>
+    <file>images/running_icon0.svg</file>
+    <file>images/running_icon1.svg</file>
+    <file>images/running_icon2.svg</file>
+    <file>images/running_icon3.svg</file>
+    <file>images/running_icon4.svg</file>
+    <file>images/running_icon5.svg</file>
+    <file>images/running_icon6.svg</file>
+    <file>images/running_icon7.svg</file>
+    <file>images/running_icon8.svg</file>
+    <file>images/running_icon9.svg</file>
+    <file>images/running_icon10.svg</file>
+    <file>images/running_icon11.svg</file>
     </qresource>
 </RCC>

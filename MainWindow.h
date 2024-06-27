@@ -64,6 +64,7 @@ private:
     Ui::MainWindow *ui;
 
     QBasicTimer m_basicTimer;
+    uint64_t m_timerCounter = 0;
 
     std::string m_currentLogFile;
     size_t m_currentLogFilePosition = 0;
@@ -72,6 +73,8 @@ private:
     QString m_trackerExecutable;
 
     std::chrono::time_point<std::chrono::system_clock> m_startTime = std::chrono::system_clock::from_time_t(0);
-
+    bool m_batchProcessing = false;
+    QVector<QIcon> m_iconList;
+    int m_iconListIndex = 0;
 };
 #endif // MAINWINDOW_H

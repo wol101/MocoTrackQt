@@ -73,8 +73,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->checkBoxAddReserves->setChecked(settings.value("AddReserves", "").toBool());
     ui->checkBoxRemoveMuscles->setChecked(settings.value("RemoveMuscles", "").toBool());
 
+    for (int i = 0; i < 12; i++)
+    {
+        m_iconList.push_back(QIcon(QString(":/images/running_icon%1.svg").arg(i)));
+    }
+    ui->toolButtonBatch->setIcon(m_iconList[0]);
+
     // and this timer just makes sure that buttons are regularly updated
-    m_basicTimer.start(1000, Qt::CoarseTimer, this);
+    m_basicTimer.start(100, Qt::CoarseTimer, this);
 
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
@@ -124,8 +130,23 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
 void MainWindow::basicTimer()
 {
-    // check the controls
-    setEnabled();
+    // this is triggered every 100ms (approximately)
+    ++m_timerCounter;
+
+    if (m_batchProcessing)
+    {
+        // animate the icon
+        ui->toolButtonBatch->setIcon(m_iconList[m_iconListIndex]);
+        ui->toolButtonBatch->repaint();
+        ++m_iconListIndex;
+        if (m_iconListIndex >= m_iconList.size()) m_iconListIndex = 0;
+    }
+
+    if (m_timerCounter % 10) // so this will happen about once per second
+    {
+        // check the controls
+        setEnabled();
+    }
 }
 
 void MainWindow::actionRun()

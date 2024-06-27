@@ -350,15 +350,22 @@ void MainWindow::enumerateMenu(QMenu *menu, QList<QAction *> *actionList, bool a
 void MainWindow::setStatusString(const QString &s)
 {
     QStringList lines = s.split("\n", Qt::SkipEmptyParts);
-    if (lines.size() == 0) { statusBar()->showMessage(s); }
-    else { statusBar()->showMessage(lines[0]); }
+    if (lines.size() == 0) { statusBar()->showMessage(s.trimmed()); }
+    else { statusBar()->showMessage(lines[0].trimmed()); }
     statusBar()->repaint();
     log(s);
 }
 
 void MainWindow::log(const QString &text)
 {
-    if (text.trimmed().size()) // only log strings with content
+    if (text.contains("\r\n")) // CR LF causes issues
+    {
+        QString newText = text;
+        newText.replace("\r\n", "\n");
+        ui->plainTextEditOutput->appendPlainText(newText);
+        ui->plainTextEditOutput->repaint();
+    }
+    else
     {
         ui->plainTextEditOutput->appendPlainText(text);
         ui->plainTextEditOutput->repaint();

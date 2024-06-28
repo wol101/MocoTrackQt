@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QBasicTimer>
 #include <QProcess>
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -38,17 +39,15 @@ private slots:
     void readStandardError();
     void readStandardOutput();
     void handleFinished();
+    void basicTimer();
 
 private:
     void closeEvent(QCloseEvent *event) override;
-    void timerEvent(QTimerEvent *event) override;
 
     void setEnabled();
     void setStatusString(const QString &s);
     void log(const QString &s);
-    void basicTimer();
     void enumerateMenu(QMenu *menu, QList<QAction *> *actionList, bool addSubmenus = false, bool addSeparators = false);
-    bool isStopable();
     void lookForMocoTrack();
 
     static void FindFiles(const QString &filename, const QString &path, QStringList *matchingFiles);
@@ -62,10 +61,11 @@ private:
     static bool checkWriteFile(const QString &filename);
     static bool checkWriteFolder(const QString &foldername);
     static void readTabDelimitedFile(const std::string &filename, std::vector<std::string> *columnHeadings, std::vector<std::vector<std::string>> *data);
+    static bool strToBool(const std::string &input);
 
     Ui::MainWindow *ui;
 
-    QBasicTimer m_basicTimer;
+    QTimer *m_timer;
     uint64_t m_timerCounter = 0;
 
     std::string m_currentLogFile;

@@ -8,11 +8,13 @@
 #include <QFileDialog>
 #include <QSettings>
 #include <QMessageBox>
+#include <QTimer>
 
 #include <thread>
 #include <chrono>
 #include <fstream>
 #include <sstream>
+#include <regex>
 
 using namespace std::chrono_literals;
 
@@ -93,8 +95,9 @@ MainWindow::MainWindow(QWidget *parent)
     // initialise the batch data
     for (size_t i = 0; i < m_batchColumnHeadings.size(); i++) { m_batchData.push_back(std::vector<std::string>()); }
 
-    // and this timer just makes sure that buttons are regularly updated
-    m_basicTimer.start(100, Qt::CoarseTimer, this);
+    m_timer = new QTimer(this);
+    connect(m_timer, &QTimer::timeout, this, &MainWindow::basicTimer);
+    m_timer->start(100); // 100ms is fast enough for this application
 
 }
 
@@ -132,12 +135,6 @@ void MainWindow::closeEvent (QCloseEvent *event)
     event->accept(); // pass the event to the default handle
 }
 
-void MainWindow::timerEvent(QTimerEvent *event)
-{
-    if (event->timerId() == m_basicTimer.timerId()) { basicTimer(); }
-    else { QMainWindow::timerEvent(event); }
-}
-
 void MainWindow::basicTimer()
 {
     // this is triggered every 100ms (approximately)
@@ -150,6 +147,11 @@ void MainWindow::basicTimer()
         ui->toolButtonRunBatch->repaint();
         ++m_iconListIndex;
         if (m_iconListIndex >= m_iconList.size()) m_iconListIndex = 0;
+    }
+    else
+    {
+        m_iconListIndex = 0;
+        ui->toolButtonRunBatch->setIcon(m_iconList[m_iconListIndex]);
     }
 
     if (m_timerCounter % 10) // so this will happen about once per second
@@ -170,13 +172,10 @@ void MainWindow::basicTimer()
             ui->lineEditConvergenceTolerance->setText(m_batchData[9][m_batchProcessingIndex].c_str());
             ui->lineEditConstraintTolerance->setText(m_batchData[10][m_batchProcessingIndex].c_str());
             ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[11][m_batchProcessingIndex]));
-            bool addReserves, removeMuscles;
-            std::istringstream(m_batchData[12][m_batchProcessingIndex]) >> std::boolalpha >> addReserves;
-            std::istringstream(m_batchData[13][m_batchProcessingIndex]) >> std::boolalpha >> removeMuscles;
-            ui->checkBoxAddReserves->setChecked(addReserves);
-            ui->checkBoxRemoveMuscles->setChecked(removeMuscles);
-            actionRun();
+            ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[12][m_batchProcessingIndex]));
+            ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[13][m_batchProcessingIndex]));
             ++m_batchProcessingIndex;
+            actionRun();
         }
 
         // check the controls
@@ -293,12 +292,6 @@ void MainWindow::pushButtonAutofill()
     ui->lineEditExperimentName->setText(QString::fromStdString(experimentName));
 }
 
-bool MainWindow::isStopable()
-{
-    if (m_tracker) return true;
-    return false;
-}
-
 void MainWindow::actionChooseOSIMFile()
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
@@ -374,7 +367,7 @@ void MainWindow::textChangedExperimentName(const QString &text)
 
 void MainWindow::toolButtonRunBatch()
 {
-    Q_ASSERT(m_batchProcessingRunning == false);
+    if (m_batchProcessingRunning) return; // this button is never disabled
     try
     {
         if (!(checkReadFile(m_batchFile))) throw std::runtime_error(m_batchFile + " cannot be read");
@@ -398,41 +391,34 @@ void MainWindow::toolButtonRunBatch()
 
 void MainWindow::setEnabled()
 {
-    if (m_tracker) // it is running so most things need to be disabled
-    {
-        auto children = findChildren<QWidget*>();
-        for (auto &&it : children)
-        {
-            if (QPushButton *button = dynamic_cast<QPushButton *>(it)) { button->setEnabled(false); }
-            if (QLineEdit *lineEdit = dynamic_cast<QLineEdit *>(it)) { lineEdit->setEnabled(false); }
-            if (QCheckBox *checkBox = dynamic_cast<QCheckBox *>(it)) { checkBox->setEnabled(false); }
-        }
-        QList<QAction *> actionList;
-        QList<QMenu*> list = menuBar()->findChildren<QMenu*>();
-        for (auto &&menu : list) { enumerateMenu(menu, &actionList); }
-        for (auto &&action : actionList) action->setEnabled(false);
-        ui->actionQuit->setEnabled(true);
-        bool isStoppable = isStopable();
-        ui->actionStop->setEnabled(isStoppable);
-        ui->pushButtonStop->setEnabled(isStoppable);
-    }
-    else
-    {
-        auto children = findChildren<QWidget*>();
-        for (auto &&it : children)
-        {
-            if (QPushButton *button = dynamic_cast<QPushButton *>(it)) { button->setEnabled(true); }
-            if (QLineEdit *lineEdit = dynamic_cast<QLineEdit *>(it)) { lineEdit->setEnabled(true); }
-            if (QCheckBox *checkBox = dynamic_cast<QCheckBox *>(it)) { checkBox->setEnabled(true); }
-        }
-        QList<QAction *> actionList;
-        QList<QMenu*> list = menuBar()->findChildren<QMenu*>();
-        for (auto &&menu : list) { enumerateMenu(menu, &actionList); }
-        for (auto &&action : actionList) action->setEnabled(true);
-        ui->actionStop->setEnabled(false);
-        ui->pushButtonStop->setEnabled(false);
-        ui->toolButtonRunBatch->setEnabled(m_batchProcessingRunning == false && checkReadFile(m_batchFile));
-    }
+    ui->lineEditConstraintTolerance->setEnabled(!m_tracker);
+    ui->lineEditConvergenceTolerance->setEnabled(!m_tracker);
+    ui->lineEditEndTime->setEnabled(!m_tracker);
+    ui->lineEditGlobalWeight->setEnabled(!m_tracker);
+    ui->lineEditReserveForce->setEnabled(!m_tracker);
+    ui->lineEditStartTime->setEnabled(!m_tracker);
+    ui->actionChooseBatchFile->setEnabled(!m_tracker);
+    ui->actionChooseMocoTrackExe->setEnabled(!m_tracker);
+    ui->actionChooseOSIMFile->setEnabled(!m_tracker);
+    ui->actionChooseOutputFolder->setEnabled(!m_tracker);
+    ui->actionChooseTRCFile->setEnabled(!m_tracker);
+    ui->actionQuit->setEnabled(true);
+    ui->actionRun->setEnabled(!m_tracker);
+    ui->actionStop->setEnabled(m_tracker);
+    ui->checkBoxAddReserves->setEnabled(!m_tracker);
+    ui->checkBoxRemoveMuscles->setEnabled(!m_tracker);
+    ui->lineEditExperimentName->setEnabled(!m_tracker);
+    ui->lineEditOSIMFile->setEnabled(!m_tracker);
+    ui->lineEditOutputFolder->setEnabled(!m_tracker);
+    ui->lineEditTRCFile->setEnabled(!m_tracker);
+    ui->pushButtonAutofill->setEnabled(!m_tracker);
+    ui->pushButtonOSIMFile->setEnabled(!m_tracker);
+    ui->pushButtonOutputFolder->setEnabled(!m_tracker);
+    ui->pushButtonRun->setEnabled(!m_tracker);
+    ui->pushButtonStop->setEnabled(m_tracker);
+    ui->pushButtonTRCFile->setEnabled(!m_tracker);
+    ui->spinBoxMeshIntervals->setEnabled(!m_tracker);
+    ui->toolButtonRunBatch->setEnabled(true);
 }
 
 void MainWindow::enumerateMenu(QMenu *menu, QList<QAction *> *actionList, bool addSubmenus, bool addSeparators)
@@ -579,8 +565,6 @@ void MainWindow::handleFinished()
     {
         setStatusString(QString("MocoTrack finished with exitCode = %1 exitStatus = %2").arg(result).arg(exitStatus));
     }
-    m_iconListIndex = 0;
-    ui->toolButtonRunBatch->setIcon(m_iconList[m_iconListIndex]);
     setEnabled();
 }
 
@@ -657,3 +641,18 @@ void MainWindow::readTabDelimitedFile(const std::string &filename, std::vector<s
         }
     }
 }
+
+bool MainWindow::strToBool(const std::string &input) // checks for a number (zero/non-zero) and then for common false words
+{
+    const static std::vector<std::string> falseWords = {"false", "off", "no"};
+    static std::regex numberMatch("([+-]?)(?=\\d|\\.\\d)\\d*(\\.\\d*)?([Ee]([+-]?\\d+))?");
+    std::string processedInput = pystring::lower(pystring::strip(input));
+    if (std::regex_match(processedInput, numberMatch))
+    {
+        if (std::stod(processedInput) == 0) return false;
+        return true;
+    }
+    if (std::find(falseWords.begin(), falseWords.end(), processedInput) != falseWords.end()) return false;
+    return true;
+}
+

@@ -158,17 +158,17 @@ std::string *Tracker::run()
     // everything lives in a datetime folder within the output folder
     auto const time = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
     std::string folderName = std::format("{:%Y-%m-%d_%H-%M-%S}", time);
-    std::string outputFolder = pystring::os::path::join(m_outputFolder, folderName);
+    m_outputSubFolder = pystring::os::path::join(m_outputFolder, folderName);
     try
     {
-        std::filesystem::create_directories(outputFolder);
+        std::filesystem::create_directories(m_outputSubFolder);
     }
     catch (...)
     {
-        m_lastError = "Error: Tracker::run() unable to create \"" + outputFolder + "\"";
+        m_lastError = "Error: Tracker::run() unable to create \"" + m_outputSubFolder + "\"";
         return &m_lastError;
     }
-    WorkingDirectoryGuard workingDirectoryGuard(outputFolder);
+    WorkingDirectoryGuard workingDirectoryGuard(m_outputSubFolder);
 
     // use the tracking tool
     OpenSim::MocoTrack mocoTrack;
@@ -184,14 +184,14 @@ std::string *Tracker::run()
 
     // save this model to the outputfolder
     m_model = modelProcessor.process();
-    std::string modelPath = pystring::os::path::join(outputFolder, "01_"s + m_experimentName + "_model.osim"s);
+    std::string modelPath = pystring::os::path::join(m_outputSubFolder, "01_"s + m_experimentName + "_model.osim"s);
     try
     {
         m_model.print(modelPath);
     }
     catch (...)
     {
-        m_lastError = "Error: Tracker::run() unable to create \"" + outputFolder + "\"";
+        m_lastError = "Error: Tracker::run() unable to create \"" + m_outputSubFolder + "\"";
         return &m_lastError;
     }
 
@@ -252,13 +252,13 @@ std::string *Tracker::run()
     }
 
     // output the required state and control files
-    m_statesPath = pystring::os::path::join(outputFolder, "02_"s + m_experimentName + "_states.sto"s);
+    m_statesPath = pystring::os::path::join(m_outputSubFolder, "02_"s + m_experimentName + "_states.sto"s);
     OpenSim::STOFileAdapter::write(mocoSolution.exportToStatesTable(), m_statesPath);
-    m_controlsPath = pystring::os::path::join(outputFolder, "03_"s + m_experimentName + "_controls.sto"s);
+    m_controlsPath = pystring::os::path::join(m_outputSubFolder, "03_"s + m_experimentName + "_controls.sto"s);
     OpenSim::STOFileAdapter::write(mocoSolution.exportToControlsTable(), m_controlsPath);
 
     // now run some analyses to get the data we actually want
-    std::string analyzePath = pystring::os::path::join(outputFolder, "04_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
+    std::string analyzePath = pystring::os::path::join(m_outputSubFolder, "04_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
     createAnalyzerXML(analyzePath);
     OpenSim::AnalyzeTool analyze(analyzePath);
     analyze.run();
@@ -276,8 +276,7 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     xml.tagAndContent("model_file", m_osimFile);
     xml.tagAndContent("replace_force_set", "false");
     xml.tagAndContent("force_set_files");
-    xml.appendText("1");
-    xml.tagAndContent("results_directory", m_outputFolder);
+    xml.tagAndContent("results_directory", m_outputSubFolder);
     xml.tagAndContent("output_precision", "8");
     xml.tagAndContent("initial_time", std::format("{:.17g}", m_startTime));
     xml.tagAndContent("final_time", std::format("{:.17g}", m_endTime));

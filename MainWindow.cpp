@@ -265,6 +265,8 @@ void MainWindow::actionRun()
 void MainWindow::actionStop()
 {
     if (!m_tracker) return;
+    int ret = QMessageBox::warning(this, "MocoTrackQt", "mocotrack is running.\nAre you sure you want to stop it?.", QMessageBox::StandardButtons(QMessageBox::Yes | QMessageBox::No), QMessageBox::No);
+    if (ret == QMessageBox::No) { return; }
     setStatusString("Trying to stop MocoTrack");
     ui->actionStop->setEnabled(false);
     ui->pushButtonStop->setEnabled(false);
@@ -367,7 +369,19 @@ void MainWindow::textChangedExperimentName(const QString &text)
 
 void MainWindow::toolButtonRunBatch()
 {
-    if (m_batchProcessingRunning) return; // this button is never disabled
+    if (m_batchProcessingRunning)
+    {
+        int ret = QMessageBox::warning(this, "MocoTrackQt", "mocotrack batch is running.\nAre you sure you want to stop it?.", QMessageBox::StandardButtons(QMessageBox::Yes | QMessageBox::No), QMessageBox::No);
+        if (ret == QMessageBox::No) { return; }
+        m_batchProcessingRunning = false;
+        setStatusString("Trying to stop MocoTrack batch");
+        ui->actionStop->setEnabled(false);
+        ui->pushButtonStop->setEnabled(false);
+        ui->pushButtonStop->repaint();
+        m_tracker->kill();
+        std::this_thread::sleep_for(5000ms);
+        return;
+    }
     try
     {
         if (!(checkReadFile(m_batchFile))) throw std::runtime_error(m_batchFile + " cannot be read");

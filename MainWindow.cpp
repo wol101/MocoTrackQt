@@ -159,11 +159,12 @@ void MainWindow::basicTimer()
         // check whether we should be running something
         if (!m_tracker && m_batchProcessingRunning && m_batchProcessingIndex < m_batchData[0].size())
         {
+            std::string p = pystring::os::path::dirname(m_batchFile); // want the paths to be relative to the batch file
             Q_ASSERT(m_batchProcessingIndex < m_batchData[0].size());
             ui->lineEditExperimentName->setText(m_batchData[0][m_batchProcessingIndex].c_str());
-            ui->lineEditOSIMFile->setText(m_batchData[1][m_batchProcessingIndex].c_str());
-            ui->lineEditTRCFile->setText(m_batchData[2][m_batchProcessingIndex].c_str());
-            ui->lineEditOutputFolder->setText(m_batchData[3][m_batchProcessingIndex].c_str());
+            ui->lineEditOSIMFile->setText(pystring::os::path::join(p, m_batchData[1][m_batchProcessingIndex]).c_str());
+            ui->lineEditTRCFile->setText(pystring::os::path::join(p, m_batchData[2][m_batchProcessingIndex]).c_str());
+            ui->lineEditOutputFolder->setText(pystring::os::path::join(p, m_batchData[3][m_batchProcessingIndex]).c_str());
             // m_batchData[4][m_batchProcessingIndex].c_str() is MarkerWeights
             ui->lineEditStartTime->setText(m_batchData[5][m_batchProcessingIndex].c_str());
             ui->lineEditEndTime->setText(m_batchData[6][m_batchProcessingIndex].c_str());

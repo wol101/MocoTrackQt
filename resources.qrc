@@ -13,5 +13,6 @@
     <file>images/running_icon9.svg</file>
     <file>images/running_icon10.svg</file>
     <file>images/running_icon11.svg</file>
+    <file>images/running_icon_cutout.svg</file>
     </qresource>
 </RCC>

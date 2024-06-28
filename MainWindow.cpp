@@ -81,6 +81,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->checkBoxAddReserves->setChecked(settings.value("AddReserves", "").toBool());
     ui->checkBoxRemoveMuscles->setChecked(settings.value("RemoveMuscles", "").toBool());
 
+    setWindowIcon(QIcon(QString(":/images/running_icon_cutout.svg")));
     for (int i = 0; i < 12; i++)
     {
         m_iconList.push_back(QIcon(QString(":/images/running_icon%1.svg").arg(i)));

@@ -32,6 +32,7 @@ set(PROJECT_SOURCES
     MainWindow.h
     MainWindow.ui
     resources.qrc
+    windows_resources.rc
     pocketpy/pocketpy.h
     pystring/pystring.cpp
     pystring/pystring.h

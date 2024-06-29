@@ -6,6 +6,8 @@
 #include <QProcess>
 #include <QTimer>
 
+#include <fstream>
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -68,9 +70,6 @@ private:
     QTimer *m_timer;
     uint64_t m_timerCounter = 0;
 
-    std::string m_currentLogFile;
-    size_t m_currentLogFilePosition = 0;
-
     QProcess *m_tracker = nullptr;
     QString m_trackerExecutable;
 
@@ -82,6 +81,8 @@ private:
     std::vector<std::vector<std::string>> m_batchData;
     size_t m_batchProcessingIndex = 0;
     bool m_batchProcessingRunning = false;
+
+    std::unique_ptr<std::ofstream> m_logStream;
 
 };
 #endif // MAINWINDOW_H

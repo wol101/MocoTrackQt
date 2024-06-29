@@ -17,6 +17,7 @@
 #include <regex>
 
 using namespace std::chrono_literals;
+using namespace std::string_literals;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -223,8 +224,10 @@ void MainWindow::actionRun()
 
     m_startTime = std::chrono::system_clock::now();
     auto const time = std::chrono::current_zone()->to_local(m_startTime);
-    std::string timeString = std::format("Simulation started at {:%Y-%m-%d %H-%M-%S}\n", time);
-    log(QString::fromStdString(timeString));
+    std::string timeString = std::format("{:%Y-%m-%d %H-%M-%S}", time);
+    std::string logPath = pystring::os::path::join(outputFolder.toStdString(), timeString + "_"s + experimentName.toStdString() + ".log"s);
+    m_logStream = std::make_unique<std::ofstream>(logPath);
+    log(QString::fromStdString("Simulation started at "s + timeString));
 
     m_tracker = new QProcess(this);
     QString program = QFileInfo(m_trackerExecutable).absoluteFilePath();
@@ -472,6 +475,7 @@ void MainWindow::setStatusString(const QString &s)
 
 void MainWindow::log(const QString &text)
 {
+    if (m_logStream) (*m_logStream) << text.toStdString();
     ui->plainTextEditOutput->appendPlainText(text);
     ui->plainTextEditOutput->repaint();
 }
@@ -567,12 +571,12 @@ void MainWindow::handleFinished()
     int result = m_tracker->exitCode();
     int exitStatus = m_tracker->exitStatus();
     delete m_tracker;
+    m_tracker = nullptr;
     if (m_batchProcessingRunning && m_batchProcessingIndex >= m_batchData[0].size())
     {
         m_batchProcessingRunning = false;
         m_batchProcessingIndex = 0;
     }
-    m_tracker = nullptr;
     if (result == 0 && exitStatus == 0)
     {
         setStatusString("MocoTrack finished");
@@ -581,6 +585,7 @@ void MainWindow::handleFinished()
     {
         setStatusString(QString("MocoTrack finished with exitCode = %1 exitStatus = %2").arg(result).arg(exitStatus));
     }
+    if (m_logStream) m_logStream.reset();
     setEnabled();
 }
 

@@ -62,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEditTRCFile->setText(settings.value("TRCFile", "").toString());
     ui->lineEditOutputFolder->setText(settings.value("OutputFolder", "").toString());
     m_batchFile = settings.value("BatchFile", "").toString().toStdString();
+    setWindowTitle(QString::fromStdString(m_batchFile));
 
     auto children = findChildren<LineEditDouble *>();
     for (auto &&it : children)
@@ -163,17 +164,17 @@ void MainWindow::basicTimer()
         {
             std::string p = pystring::os::path::dirname(m_batchFile); // want the paths to be relative to the batch file
             Q_ASSERT(m_batchProcessingIndex < m_batchData[0].size());
-            ui->lineEditExperimentName->setText(m_batchData[0][m_batchProcessingIndex].c_str());
-            ui->lineEditOSIMFile->setText(pystring::os::path::join(p, m_batchData[1][m_batchProcessingIndex]).c_str());
-            ui->lineEditTRCFile->setText(pystring::os::path::join(p, m_batchData[2][m_batchProcessingIndex]).c_str());
-            ui->lineEditOutputFolder->setText(pystring::os::path::join(p, m_batchData[3][m_batchProcessingIndex]).c_str());
-            // m_batchData[4][m_batchProcessingIndex].c_str() is MarkerWeights
-            ui->lineEditStartTime->setText(m_batchData[5][m_batchProcessingIndex].c_str());
-            ui->lineEditEndTime->setText(m_batchData[6][m_batchProcessingIndex].c_str());
-            ui->lineEditReserveForce->setText(m_batchData[7][m_batchProcessingIndex].c_str());
-            ui->lineEditGlobalWeight->setText(m_batchData[8][m_batchProcessingIndex].c_str());
-            ui->lineEditConvergenceTolerance->setText(m_batchData[9][m_batchProcessingIndex].c_str());
-            ui->lineEditConstraintTolerance->setText(m_batchData[10][m_batchProcessingIndex].c_str());
+            ui->lineEditExperimentName->setText(QString::fromStdString(m_batchData[0][m_batchProcessingIndex]));
+            ui->lineEditOSIMFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[1][m_batchProcessingIndex])));
+            ui->lineEditTRCFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[2][m_batchProcessingIndex])));
+            ui->lineEditOutputFolder->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[3][m_batchProcessingIndex])));
+            // m_batchData[4][m_batchProcessingIndex] is MarkerWeights
+            ui->lineEditStartTime->setText(QString::fromStdString(m_batchData[5][m_batchProcessingIndex]));
+            ui->lineEditEndTime->setText(QString::fromStdString(m_batchData[6][m_batchProcessingIndex]));
+            ui->lineEditReserveForce->setText(QString::fromStdString(m_batchData[7][m_batchProcessingIndex]));
+            ui->lineEditGlobalWeight->setText(QString::fromStdString(m_batchData[8][m_batchProcessingIndex]));
+            ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[9][m_batchProcessingIndex]));
+            ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[10][m_batchProcessingIndex]));
             ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[11][m_batchProcessingIndex]));
             ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[12][m_batchProcessingIndex]));
             ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[13][m_batchProcessingIndex]));
@@ -288,6 +289,7 @@ void MainWindow::actionChooseBatchFile()
     if (fileName.size())
     {
         m_batchFile = fileName.toStdString();
+        setWindowTitle(fileName);
         settings.setValue("BatchFile", fileName);
     }
 }

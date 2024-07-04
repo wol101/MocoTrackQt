@@ -47,6 +47,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pushButtonOSIMFile, &QPushButton::clicked, this, &MainWindow::actionChooseOSIMFile);
     connect(ui->pushButtonTRCFile, &QPushButton::clicked, this, &MainWindow::actionChooseTRCFile);
     connect(ui->pushButtonOutputFolder, &QPushButton::clicked, this, &::MainWindow::actionChooseOutputFolder);
+    connect(ui->pushButtonBatchFile, &QPushButton::clicked, this, &::MainWindow::actionChooseBatchFile);
+    connect(ui->pushButtonWeightsFile, &QPushButton::clicked, this, &::MainWindow::actionChooseWeightsFile);
     connect(ui->pushButtonRun, &QPushButton::clicked, this, &MainWindow::actionRun);
     connect(ui->pushButtonStop, &QPushButton::clicked, this, &MainWindow::actionStop);
     connect(ui->pushButtonAutofill, &QPushButton::clicked, this, &MainWindow::pushButtonAutofill);
@@ -54,6 +56,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->lineEditTRCFile, &QLineEdit::textChanged, this, &MainWindow::textChangedTRCFile);
     connect(ui->lineEditOutputFolder, &QLineEdit::textChanged, this, &MainWindow::textChangedOutputFolder);
     connect(ui->lineEditExperimentName, &QLineEdit::textChanged, this, &MainWindow::textChangedExperimentName);
+    connect(ui->lineEditBatchFile, &QLineEdit::textChanged, this, &MainWindow::textChangedBatchFile);
+    connect(ui->lineEditWeightsFile, &QLineEdit::textChanged, this, &MainWindow::textChangedWeightsFile);
     connect(ui->toolButtonRunBatch, &QPushButton::clicked, this, &MainWindow::toolButtonRunBatch);
 
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
@@ -61,8 +65,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEditOSIMFile->setText(settings.value("OSIMFile", "").toString());
     ui->lineEditTRCFile->setText(settings.value("TRCFile", "").toString());
     ui->lineEditOutputFolder->setText(settings.value("OutputFolder", "").toString());
-    m_batchFile = settings.value("BatchFile", "").toString().toStdString();
-    setWindowTitle(QString::fromStdString(m_batchFile));
+    ui->lineEditBatchFile->setText(settings.value("BatchFile", "").toString());
+    ui->lineEditWeightsFile->setText(settings.value("WeightsFile", "").toString());
 
     auto children = findChildren<LineEditDouble *>();
     for (auto &&it : children)
@@ -162,13 +166,13 @@ void MainWindow::basicTimer()
         // check whether we should be running something
         if (!m_tracker && m_batchProcessingRunning && m_batchProcessingIndex < m_batchData[0].size())
         {
-            std::string p = pystring::os::path::dirname(m_batchFile); // want the paths to be relative to the batch file
+            std::string p = pystring::os::path::dirname(ui->lineEditBatchFile->text().toStdString()); // want the paths to be relative to the batch file
             Q_ASSERT(m_batchProcessingIndex < m_batchData[0].size());
             ui->lineEditExperimentName->setText(QString::fromStdString(m_batchData[0][m_batchProcessingIndex]));
             ui->lineEditOSIMFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[1][m_batchProcessingIndex])));
             ui->lineEditTRCFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[2][m_batchProcessingIndex])));
             ui->lineEditOutputFolder->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[3][m_batchProcessingIndex])));
-            // m_batchData[4][m_batchProcessingIndex] is MarkerWeights
+            ui->lineEditWeightsFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[4][m_batchProcessingIndex])));
             ui->lineEditStartTime->setText(QString::fromStdString(m_batchData[5][m_batchProcessingIndex]));
             ui->lineEditEndTime->setText(QString::fromStdString(m_batchData[6][m_batchProcessingIndex]));
             ui->lineEditReserveForce->setText(QString::fromStdString(m_batchData[7][m_batchProcessingIndex]));
@@ -195,6 +199,7 @@ void MainWindow::actionRun()
     QString trcFile = QFileInfo(ui->lineEditTRCFile->text()).absoluteFilePath();
     QString outputFolder = QFileInfo(ui->lineEditOutputFolder->text()).absoluteFilePath();
     QString experimentName = ui->lineEditExperimentName->text();
+    QString weightsFile = ui->lineEditWeightsFile->text();
     double startTime = ui->lineEditStartTime->value();
     double endTime = ui->lineEditEndTime->value();
     double reservesForce = ui->lineEditReserveForce->value();
@@ -213,6 +218,8 @@ void MainWindow::actionRun()
         if (!checkWriteFolder(outputFolder)) throw std::runtime_error("Output folder cannot be used");
         if (!validExperimentName.match(experimentName).hasMatch()) throw std::runtime_error("Experiment name not valid");
         if (startTime >= endTime) throw std::runtime_error("Invalid start and end times");
+        if (weightsFile.size() && !checkReadFile(weightsFile)) throw std::runtime_error("Weights file cannot be read");
+
     }
     catch (const std::runtime_error& ex)
     {
@@ -237,6 +244,7 @@ void MainWindow::actionRun()
               << "--osimFile" << osimFile
               << "--outputFolder" << outputFolder
               << "--experimentName" << experimentName
+              << "--weightsFile" << weightsFile
               << "--startTime" << QString("%1").arg(startTime, 0, 'g', 17)
               << "--endTime" << QString("%1").arg(endTime, 0, 'g', 17)
               << "--reservesOptimalForce" << QString("%1").arg(reservesForce, 0, 'g', 17)
@@ -267,7 +275,6 @@ void MainWindow::actionRun()
     }
 }
 
-
 void MainWindow::actionStop()
 {
     if (!m_tracker) return;
@@ -285,12 +292,23 @@ void MainWindow::actionChooseBatchFile()
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
     QString lastFile = settings.value("BatchFile", "").toString();
-    QString fileName = QFileDialog::getOpenFileName(this, "Open batch file", lastFile, "Batch Files (*.tab *.txt);;All Files (*.*)");
+    QString fileName = QFileDialog::getOpenFileName(this, "Choose batch file", lastFile, "Batch Files (*.tab *.txt);;All Files (*.*)");
     if (fileName.size())
     {
-        m_batchFile = fileName.toStdString();
-        setWindowTitle(fileName);
+        ui->lineEditBatchFile->setText(fileName);
         settings.setValue("BatchFile", fileName);
+    }
+}
+
+void MainWindow::actionChooseWeightsFile()
+{
+    QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
+    QString lastFile = settings.value("WeightsFile", "").toString();
+    QString fileName = QFileDialog::getOpenFileName(this, "Choose weights file", lastFile, "Weights Files (*.tab *.txt);;All Files (*.*)");
+    if (fileName.size())
+    {
+        ui->lineEditWeightsFile->setText(fileName);
+        settings.setValue("WeightsFile", fileName);
     }
 }
 
@@ -374,6 +392,21 @@ void MainWindow::textChangedExperimentName(const QString &text)
     setEnabled();
 }
 
+void MainWindow::textChangedWeightsFile(const QString &text)
+{
+    QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
+    settings.setValue("WeightsFile", text);
+    setEnabled();
+}
+
+void MainWindow::textChangedBatchFile(const QString &text)
+{
+    QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
+    settings.setValue("BatchFile", text);
+    setWindowTitle(text);
+    setEnabled();
+}
+
 void MainWindow::toolButtonRunBatch()
 {
     if (m_batchProcessingRunning)
@@ -385,18 +418,19 @@ void MainWindow::toolButtonRunBatch()
         ui->actionStop->setEnabled(false);
         ui->pushButtonStop->setEnabled(false);
         ui->pushButtonStop->repaint();
-        m_tracker->kill();
+        if (m_tracker) m_tracker->kill();
         std::this_thread::sleep_for(5000ms);
         return;
     }
     try
     {
-        if (!(checkReadFile(m_batchFile))) throw std::runtime_error(m_batchFile + " cannot be read");
+        std::string batchFile = ui->lineEditBatchFile->text().toStdString();
+        if (!(checkReadFile(batchFile))) throw std::runtime_error(batchFile + " cannot be read");
         std::vector<std::string> columnHeadings;
         std::vector<std::vector<std::string>> data;
-        readTabDelimitedFile(m_batchFile, &columnHeadings, &data);
-        if (columnHeadings.size() == 0 || data.size() == 0) throw std::runtime_error(m_batchFile + " contains no data");
-        if (m_batchColumnHeadings != columnHeadings) throw std::runtime_error(m_batchFile + " column heading mismatch");
+        readTabDelimitedFile(batchFile, &columnHeadings, &data);
+        if (columnHeadings.size() == 0 || data.size() == 0) throw std::runtime_error(batchFile + " contains no data");
+        if (m_batchColumnHeadings != columnHeadings) throw std::runtime_error(batchFile + " column heading mismatch");
         m_batchData = data;
         m_batchProcessingIndex = 0;
         m_batchProcessingRunning = true;
@@ -423,6 +457,7 @@ void MainWindow::setEnabled()
     ui->actionChooseOSIMFile->setEnabled(!m_tracker);
     ui->actionChooseOutputFolder->setEnabled(!m_tracker);
     ui->actionChooseTRCFile->setEnabled(!m_tracker);
+    ui->actionChooseWeightsFile->setEnabled(!m_tracker);
     ui->actionQuit->setEnabled(true);
     ui->actionRun->setEnabled(!m_tracker);
     ui->actionStop->setEnabled(m_tracker);
@@ -438,6 +473,8 @@ void MainWindow::setEnabled()
     ui->pushButtonRun->setEnabled(!m_tracker);
     ui->pushButtonStop->setEnabled(m_tracker);
     ui->pushButtonTRCFile->setEnabled(!m_tracker);
+    ui->pushButtonWeightsFile->setEnabled(!m_tracker);
+    ui->pushButtonBatchFile->setEnabled(!m_tracker);
     ui->spinBoxMeshIntervals->setEnabled(!m_tracker);
     ui->toolButtonRunBatch->setEnabled(true);
 }
@@ -639,11 +676,18 @@ void MainWindow::readTabDelimitedFile(const std::string &filename, std::vector<s
 {
     columnHeadings->clear();
     data->clear();
-    std::ifstream file(filename);
-    if (!file) return;
     std::stringstream buffer;
-    buffer << file.rdbuf();
-    file.close();
+    try {
+        std::ifstream file(filename);
+        if (!file) return;
+        buffer << file.rdbuf();
+        file.close();
+
+    }
+    catch (...)
+    {
+        return;
+    }
     std::vector<std::string> lines = pystring::splitlines(buffer.str());
     if (lines.size() == 0) return;
     *columnHeadings = pystring::split(lines[0], "\t");

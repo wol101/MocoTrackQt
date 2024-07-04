@@ -27,131 +27,6 @@ std::string Tracker::trcFile() const
     return m_trcFile;
 }
 
-void Tracker::setTrcFile(const std::string &newTrcFile)
-{
-    m_trcFile = newTrcFile;
-}
-
-std::string Tracker::osimFile() const
-{
-    return m_osimFile;
-}
-
-void Tracker::setOsimFile(const std::string &newOsimFile)
-{
-    m_osimFile = newOsimFile;
-}
-
-std::string Tracker::experimentName() const
-{
-    return m_experimentName;
-}
-
-void Tracker::setExperimentName(const std::string &newExperimentName)
-{
-    m_experimentName = newExperimentName;
-}
-
-double Tracker::startTime() const
-{
-    return m_startTime;
-}
-
-void Tracker::setStartTime(double newStartTime)
-{
-    m_startTime = newStartTime;
-}
-
-double Tracker::endTime() const
-{
-    return m_endTime;
-}
-
-void Tracker::setEndTime(double newEndTime)
-{
-    m_endTime = newEndTime;
-}
-
-int Tracker::meshIntervals() const
-{
-    return m_meshIntervals;
-}
-
-void Tracker::setMeshIntervals(int newMeshIntervals)
-{
-    m_meshIntervals = newMeshIntervals;
-}
-
-bool Tracker::addReserves() const
-{
-    return m_addReserves;
-}
-
-void Tracker::setAddReserves(bool newAddReserves)
-{
-    m_addReserves = newAddReserves;
-}
-
-bool Tracker::removeMuscles() const
-{
-    return m_removeMuscles;
-}
-
-void Tracker::setRemoveMuscles(bool newRemoveMuscles)
-{
-    m_removeMuscles = newRemoveMuscles;
-}
-
-double Tracker::reservesOptimalForce() const
-{
-    return m_reservesOptimalForce;
-}
-
-void Tracker::setReservesOptimalForce(double newReservesOptimalForce)
-{
-    m_reservesOptimalForce = newReservesOptimalForce;
-}
-
-double Tracker::globalTrackingWeight() const
-{
-    return m_globalTrackingWeight;
-}
-
-void Tracker::setGlobalTrackingWeight(double newGlobalTrackingWeight)
-{
-    m_globalTrackingWeight = newGlobalTrackingWeight;
-}
-
-double Tracker::convergenceTolerance() const
-{
-    return m_convergenceTolerance;
-}
-
-void Tracker::setConvergenceTolerance(double newConvergenceTolerance)
-{
-    m_convergenceTolerance = newConvergenceTolerance;
-}
-
-double Tracker::constraintTolerance() const
-{
-    return m_constraintTolerance;
-}
-
-void Tracker::setConstraintTolerance(double newConstraintTolerance)
-{
-    m_constraintTolerance = newConstraintTolerance;
-}
-
-std::string Tracker::outputFolder() const
-{
-    return m_outputFolder;
-}
-
-void Tracker::setOutputFolder(const std::string &newOutputFolder)
-{
-    m_outputFolder = newOutputFolder;
-}
-
 std::string *Tracker::run()
 {
     m_lastError.clear();
@@ -169,6 +44,19 @@ std::string *Tracker::run()
         return &m_lastError;
     }
     WorkingDirectoryGuard workingDirectoryGuard(m_outputSubFolder);
+
+    if (m_weightsFile.size())
+    {
+        std::vector<std::string> weightsFileColumnHeadings;
+        std::vector<std::vector<std::string>> weightsFileData;
+        readTabDelimitedFile(m_weightsFile, &weightsFileColumnHeadings, &weightsFileData);
+        if (m_weightsFileColumnHeadings != weightsFileColumnHeadings)
+        {
+            m_lastError = "Error: Tracker::run() unable to read \"" + m_weightsFile + "\"";
+            return &m_lastError;
+        }
+        m_weightsFileData = weightsFileData;
+    }
 
     // use the tracking tool
     OpenSim::MocoTrack mocoTrack;
@@ -199,12 +87,13 @@ std::string *Tracker::run()
     mocoTrack.setModel(modelProcessor);
 
     // add the markers
-    // double lowpassFilterFreq = 6.0;
-    // OpenSim::TimeSeriesTableVec3 markers(m_trcFile);
-    // OpenSim::TimeSeriesTable markersFlat = markers.flatten();
-    // mocoTrack.set_markers_reference(OpenSim::TableProcessor(markersFlat) | OpenSim::TabOpLowPassFilter(lowpassFilterFreq)); // requires std:c++20 and include <ranges>
-    // mocoTrack.set_markers_reference(OpenSim::TableProcessor(markersFlat));
-    mocoTrack.setMarkersReferenceFromTRC(m_trcFile);
+    double lowpassFilterFreq = 6.0;
+    OpenSim::TimeSeriesTableVec3 markers(m_trcFile);
+    OpenSim::TimeSeriesTable markersFlat = markers.flatten();
+    OpenSim::TableProcessor tableProcessor(markersFlat);
+    tableProcessor.append(OpenSim::TabOpLowPassFilter(lowpassFilterFreq));
+    mocoTrack.set_markers_reference(tableProcessor);
+    // mocoTrack.setMarkersReferenceFromTRC(m_trcFile);
 
     // alter some of the marker properties
     mocoTrack.set_allow_unused_references(true); // allows markers in the trc file not to be used - warning this can easily be an error that needs trapping
@@ -212,23 +101,45 @@ std::string *Tracker::run()
     // adjust the weights
     mocoTrack.set_markers_global_tracking_weight(m_globalTrackingWeight);
 
-    // individual weight setting is more complex
-    // OpenSim::MocoWeightSet markerWeights;
-    // markerWeights.cloneAndAppend({"R.ASIS", 20});
-    // markerWeights.cloneAndAppend({"L.ASIS", 20});
-    // markerWeights.cloneAndAppend({"R.PSIS", 20});
-    // markerWeights.cloneAndAppend({"L.PSIS", 20});
-    // markerWeights.cloneAndAppend({"R.Knee", 10});
-    // markerWeights.cloneAndAppend({"R.Ankle", 10});
-    // markerWeights.cloneAndAppend({"R.Heel", 10});
-    // markerWeights.cloneAndAppend({"R.MT5", 5});
-    // markerWeights.cloneAndAppend({"R.Toe", 2});
-    // markerWeights.cloneAndAppend({"L.Knee", 10});
-    // markerWeights.cloneAndAppend({"L.Ankle", 10});
-    // markerWeights.cloneAndAppend({"L.Heel", 10});
-    // markerWeights.cloneAndAppend({"L.MT5", 5});
-    // markerWeights.cloneAndAppend({"L.Toe", 2});
-    // mocoTrack.set_markers_weight_set(markerWeights);
+    if (m_weightsFileData[0].size())
+    {
+        for (int i = 0; i < m_model.getMarkerSet().getSize(); ++i)
+        {
+            for (size_t j = 0; j < m_weightsFileData[0].size(); ++j)
+            {
+                if (m_weightsFileData[0][j] ==  m_model.getMarkerSet().get(i).getName())
+                {
+                    m_markerWeights[m_weightsFileData[0][j]] = std::stod(m_weightsFileData[1][j]);
+                    break;
+                }
+            }
+        }
+        for (int i = 0; i < m_model.getForceSet().getSize(); ++i)
+        {
+            std::string actuatorName = m_model.getForceSet().get(i).getName();
+            std::string className = m_model.getForceSet().get(i).getConcreteClassName();
+            for (size_t j = 0; j < m_weightsFileData[0].size(); ++j)
+            {
+                if (m_weightsFileData[0][j] ==  m_model.getForceSet().get(i).getName() /*&& m_model.getForceSet().get(i).getConcreteClassName() == "CoordinateActuator"s*/)
+                {
+                    m_actuatorWeights[m_weightsFileData[0][j]] = std::stod(m_weightsFileData[1][j]);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (m_markerWeights.size())
+    {
+        OpenSim::MocoWeightSet markerWeights;
+        for (auto &&markerWeight : m_markerWeights)
+        {
+            std::cerr << markerWeight.first << "\n";
+            std::cerr << markerWeight.second << "\n";
+            markerWeights.cloneAndAppend({markerWeight.first, markerWeight.second});
+        }
+        mocoTrack.set_markers_weight_set(markerWeights);
+    }
 
     // set the time subsample
     mocoTrack.set_initial_time(m_startTime);
@@ -236,6 +147,24 @@ std::string *Tracker::run()
 
     // initialise the solver so we can alter some of the parameters
     OpenSim::MocoStudy mocoStudy = mocoTrack.initialize();
+
+    // if (m_actuatorWeights.size())
+    // {
+    //     OpenSim::MocoProblem& problem = mocoStudy.updProblem();
+    //     OpenSim::MocoControlGoal& effort = dynamic_cast<OpenSim::MocoControlGoal&>(problem.updGoal("control_effort"));
+    //     effort.setWeight(1.0);
+
+    //     for (const auto& coordAct : m_model.getComponentList<OpenSim::CoordinateActuator>())
+    //     {
+    //         auto coordPath = coordAct.getAbsolutePathString();
+    //         std::cerr << coordPath << "\n";
+    //         auto it = m_actuatorWeights.find(coordPath);
+    //         if (it != m_actuatorWeights.end())
+    //         {
+    //             effort.setWeightForControl(coordPath, it->second);
+    //         }
+    //     }
+    // }
 
     // Update the solver tolerances.
     auto& solver = mocoStudy.updSolver<OpenSim::MocoCasADiSolver>();
@@ -395,4 +324,177 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     outputFile << xml.xmlString();
     outputFile.close();
 }
+
+void Tracker::readTabDelimitedFile(const std::string &filename, std::vector<std::string> *columnHeadings, std::vector<std::vector<std::string>> *data)
+{
+    columnHeadings->clear();
+    data->clear();
+    std::stringstream buffer;
+    try {
+        std::ifstream file(filename);
+        if (!file) return;
+        buffer << file.rdbuf();
+        file.close();
+
+    }
+    catch (...)
+    {
+        return;
+    }
+    std::vector<std::string> lines = pystring::splitlines(buffer.str());
+    if (lines.size() == 0) return;
+    *columnHeadings = pystring::split(lines[0], "\t");
+    if (columnHeadings->size() == 0) return;
+    for (size_t i = 0; i < columnHeadings->size(); i++)
+    {
+        data->push_back(std::vector<std::string>());
+    }
+    std::vector<std::string> tokens;
+    for (size_t i = 1; i < lines.size(); i++)
+    {
+        tokens = pystring::split(lines[i], "\t");
+        if (tokens.size() == 0) continue; // skip blank lines
+        for (size_t j = 0; j < columnHeadings->size(); j++)
+        {
+            if (j < tokens.size()) { (*data)[j].push_back(tokens[j]); }
+            else { (*data)[j].push_back(""); } // pad any lines that are incomplete
+        }
+    }
+}
+
+void Tracker::setTrcFile(const std::string &newTrcFile)
+{
+    m_trcFile = newTrcFile;
+}
+
+std::string Tracker::osimFile() const
+{
+    return m_osimFile;
+}
+
+void Tracker::setOsimFile(const std::string &newOsimFile)
+{
+    m_osimFile = newOsimFile;
+}
+
+std::string Tracker::experimentName() const
+{
+    return m_experimentName;
+}
+
+void Tracker::setExperimentName(const std::string &newExperimentName)
+{
+    m_experimentName = newExperimentName;
+}
+
+double Tracker::startTime() const
+{
+    return m_startTime;
+}
+
+void Tracker::setStartTime(double newStartTime)
+{
+    m_startTime = newStartTime;
+}
+
+double Tracker::endTime() const
+{
+    return m_endTime;
+}
+
+void Tracker::setEndTime(double newEndTime)
+{
+    m_endTime = newEndTime;
+}
+
+int Tracker::meshIntervals() const
+{
+    return m_meshIntervals;
+}
+
+void Tracker::setMeshIntervals(int newMeshIntervals)
+{
+    m_meshIntervals = newMeshIntervals;
+}
+
+bool Tracker::addReserves() const
+{
+    return m_addReserves;
+}
+
+void Tracker::setAddReserves(bool newAddReserves)
+{
+    m_addReserves = newAddReserves;
+}
+
+bool Tracker::removeMuscles() const
+{
+    return m_removeMuscles;
+}
+
+void Tracker::setRemoveMuscles(bool newRemoveMuscles)
+{
+    m_removeMuscles = newRemoveMuscles;
+}
+
+double Tracker::reservesOptimalForce() const
+{
+    return m_reservesOptimalForce;
+}
+
+void Tracker::setReservesOptimalForce(double newReservesOptimalForce)
+{
+    m_reservesOptimalForce = newReservesOptimalForce;
+}
+
+double Tracker::globalTrackingWeight() const
+{
+    return m_globalTrackingWeight;
+}
+
+void Tracker::setGlobalTrackingWeight(double newGlobalTrackingWeight)
+{
+    m_globalTrackingWeight = newGlobalTrackingWeight;
+}
+
+double Tracker::convergenceTolerance() const
+{
+    return m_convergenceTolerance;
+}
+
+void Tracker::setConvergenceTolerance(double newConvergenceTolerance)
+{
+    m_convergenceTolerance = newConvergenceTolerance;
+}
+
+double Tracker::constraintTolerance() const
+{
+    return m_constraintTolerance;
+}
+
+void Tracker::setConstraintTolerance(double newConstraintTolerance)
+{
+    m_constraintTolerance = newConstraintTolerance;
+}
+
+std::string Tracker::outputFolder() const
+{
+    return m_outputFolder;
+}
+
+void Tracker::setOutputFolder(const std::string &newOutputFolder)
+{
+    m_outputFolder = newOutputFolder;
+}
+
+std::string Tracker::weightsFile() const
+{
+    return m_weightsFile;
+}
+
+void Tracker::setWeightsFile(const std::string &newWeightsFile)
+{
+    m_weightsFile = newWeightsFile;
+}
+
 

@@ -29,12 +29,15 @@ public slots:
     void actionChooseOSIMFile();
     void actionChooseOutputFolder();
     void actionChooseBatchFile();
+    void actionChooseWeightsFile();
     void actionChooseMocoTrackExe();
     void pushButtonAutofill();
     void textChangedTRCFile(const QString &text);
     void textChangedOSIMFile(const QString &text);
     void textChangedOutputFolder(const QString &text);
     void textChangedExperimentName(const QString &text);
+    void textChangedWeightsFile(const QString &text);
+    void textChangedBatchFile(const QString &text);
     void toolButtonRunBatch();
 
 private slots:
@@ -76,8 +79,7 @@ private:
     std::chrono::time_point<std::chrono::system_clock> m_startTime = std::chrono::system_clock::from_time_t(0);
     QVector<QIcon> m_iconList;
     int m_iconListIndex = 0;
-    std::string m_batchFile;
-    std::vector<std::string> m_batchColumnHeadings = {"RunID","OSIMFile","TRCFile","OutputFolder","MarkerWeights","StartTime","EndTime","ReserveForce","GlobalWeight","ConvergeTol","ConstraintTol","MeshIntervals","AddReserves","RemoveMuscles"};;
+    std::vector<std::string> m_batchColumnHeadings = {"RunID","OSIMFile","TRCFile","OutputFolder","MarkerWeights","StartTime","EndTime","ReserveForce","GlobalWeight","ConvergeTol","ConstraintTol","MeshIntervals","AddReserves","RemoveMuscles"};
     std::vector<std::vector<std::string>> m_batchData;
     size_t m_batchProcessingIndex = 0;
     bool m_batchProcessingRunning = false;

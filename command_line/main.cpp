@@ -17,6 +17,7 @@ int main(int argc, const char **argv)
     argparse.AddArgument("-o"s, "--outputFolder"s, "Output folder"s, ""s, 1, true, ArgParse::String);
     argparse.AddArgument("-e"s, "--experimentName"s, "Experiment descriptor"s, ""s, 1, true, ArgParse::String);
     // optional arguments
+    argparse.AddArgument("-wf"s, "--weightsFile"s, "File containing weights for markers and actuators"s, ""s, 1, false, ArgParse::String);
     argparse.AddArgument("-st"s, "--startTime"s, "Start time"s, "0.0"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-et"s, "--endTime"s, "End time"s, "1.0"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-mi"s, "--meshIntervals"s, "Mesh interval"s, "50"s, 1, false, ArgParse::Int);
@@ -38,6 +39,7 @@ int main(int argc, const char **argv)
     std::string osimFile;
     std::string outputFolder;
     std::string experimentName;
+    std::string weightsFile;
     double startTime = 0;
     double endTime = 1.0;
     int meshIntervals = 50;
@@ -52,6 +54,7 @@ int main(int argc, const char **argv)
     argparse.Get("--osimFile"s, &osimFile);
     argparse.Get("--outputFolder"s, &outputFolder);
     argparse.Get("--experimentName"s, &experimentName);
+    argparse.Get("--weightsFile"s, &weightsFile);
     argparse.Get("--startTime"s, &startTime);
     argparse.Get("--endTime"s, &endTime);
     argparse.Get("--meshIntervals"s, &meshIntervals);
@@ -67,6 +70,7 @@ int main(int argc, const char **argv)
     tracker.setOsimFile(osimFile);
     tracker.setOutputFolder(outputFolder);
     tracker.setExperimentName(experimentName);
+    tracker.setWeightsFile(weightsFile);
     tracker.setStartTime(startTime);
     tracker.setEndTime(endTime);
     tracker.setMeshIntervals(meshIntervals);

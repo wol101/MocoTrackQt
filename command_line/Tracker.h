@@ -53,13 +53,19 @@ public:
     double constraintTolerance() const;
     void setConstraintTolerance(double newConstraintTolerance);
 
+    std::string weightsFile() const;
+    void setWeightsFile(const std::string &newWeightsFile);
+
 private:
     void createAnalyzerXML(const std::string &filename);
+
+    static void readTabDelimitedFile(const std::string &filename, std::vector<std::string> *columnHeadings, std::vector<std::vector<std::string>> *data);
 
     std::string m_trcFile;
     std::string m_osimFile;
     std::string m_outputFolder;
     std::string m_experimentName;
+    std::string m_weightsFile;
 
     std::string m_statesPath;
     std::string m_controlsPath;
@@ -76,6 +82,11 @@ private:
 
     bool m_addReserves = false;
     bool m_removeMuscles = false;
+
+    std::vector<std::string> m_weightsFileColumnHeadings = {"Name", "Weight"};
+    std::vector<std::vector<std::string>> m_weightsFileData;
+    std::map<std::string, double> m_markerWeights;
+    std::map<std::string, double> m_actuatorWeights;
 
     std::string m_lastError;
 };

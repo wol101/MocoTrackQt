@@ -70,6 +70,9 @@ std::string *Tracker::run()
     if (m_removeMuscles) modelProcessor.append(OpenSim::ModOpRemoveMuscles());
     if (m_addReserves) modelProcessor.append(OpenSim::ModOpAddReserves(m_reservesOptimalForce));
 
+    // add the model to the tracking tool
+    mocoTrack.setModel(modelProcessor);
+
     // save this model to the outputfolder
     m_model = modelProcessor.process();
     std::string modelPath = pystring::os::path::join(m_outputSubFolder, "01_"s + m_experimentName + "_model.osim"s);
@@ -82,9 +85,6 @@ std::string *Tracker::run()
         m_lastError = "Error: Tracker::run() unable to create \"" + m_outputSubFolder + "\"";
         return &m_lastError;
     }
-
-    // add the model to the tracking tool
-    mocoTrack.setModel(modelProcessor);
 
     // add the markers
     double lowpassFilterFreq = 6.0;
@@ -116,11 +116,9 @@ std::string *Tracker::run()
         }
         for (int i = 0; i < m_model.getForceSet().getSize(); ++i)
         {
-            std::string actuatorName = m_model.getForceSet().get(i).getName();
-            std::string className = m_model.getForceSet().get(i).getConcreteClassName();
             for (size_t j = 0; j < m_weightsFileData[0].size(); ++j)
             {
-                if (m_weightsFileData[0][j] ==  m_model.getForceSet().get(i).getName() /*&& m_model.getForceSet().get(i).getConcreteClassName() == "CoordinateActuator"s*/)
+                if (m_weightsFileData[0][j] ==  m_model.getForceSet().get(i).getName() && m_model.getForceSet().get(i).getConcreteClassName() == "CoordinateActuator"s)
                 {
                     m_actuatorWeights[m_weightsFileData[0][j]] = std::stod(m_weightsFileData[1][j]);
                     break;
@@ -134,8 +132,6 @@ std::string *Tracker::run()
         OpenSim::MocoWeightSet markerWeights;
         for (auto &&markerWeight : m_markerWeights)
         {
-            std::cerr << markerWeight.first << "\n";
-            std::cerr << markerWeight.second << "\n";
             markerWeights.cloneAndAppend({markerWeight.first, markerWeight.second});
         }
         mocoTrack.set_markers_weight_set(markerWeights);
@@ -148,21 +144,22 @@ std::string *Tracker::run()
     // initialise the solver so we can alter some of the parameters
     OpenSim::MocoStudy mocoStudy = mocoTrack.initialize();
 
-    // if (m_actuatorWeights.size())
-    // {
-    //     OpenSim::MocoProblem& problem = mocoStudy.updProblem();
-    //     OpenSim::MocoControlGoal& effort = dynamic_cast<OpenSim::MocoControlGoal&>(problem.updGoal("control_effort"));
-    //     effort.setWeight(1.0);
+    OpenSim::MocoProblem& problem = mocoStudy.updProblem();
+    OpenSim::MocoControlGoal& effort = dynamic_cast<OpenSim::MocoControlGoal&>(problem.updGoal("control_effort"));
+    effort.setWeight(1.0);
+    for (auto &&actuatorWeight : m_actuatorWeights)
+    {
+        effort.setWeightForControl("/forceset/"s + actuatorWeight.first, actuatorWeight.second);
+    }
 
-    //     for (const auto& coordAct : m_model.getComponentList<OpenSim::CoordinateActuator>())
+    // for (const auto& coordAct : m_model.getComponentList<OpenSim::CoordinateActuator>())
+    // {
+    //     auto coordPath = coordAct.getAbsolutePathString();
+    //     std::cerr << coordPath << "\n";
+    //     auto it = m_actuatorWeights.find(coordPath);
+    //     if (it != m_actuatorWeights.end())
     //     {
-    //         auto coordPath = coordAct.getAbsolutePathString();
-    //         std::cerr << coordPath << "\n";
-    //         auto it = m_actuatorWeights.find(coordPath);
-    //         if (it != m_actuatorWeights.end())
-    //         {
-    //             effort.setWeightForControl(coordPath, it->second);
-    //         }
+    //         effort.setWeightForControl(coordPath, it->second);
     //     }
     // }
 

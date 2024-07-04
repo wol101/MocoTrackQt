@@ -572,7 +572,11 @@ bool MainWindow::checkWriteFolder(const QString &foldername)
 {
     if (foldername.size() == 0) return false;
     QFileInfo info(foldername);
-    if (!info.exists()) { return checkWriteFolder(info.absolutePath()); }
+    if (!info.exists())
+    {
+        QDir dir(foldername);
+        return dir.mkpath(".");
+    }
     if (!info.isDir()) return false;
     if (!info.isWritable()) return false;
     return true;

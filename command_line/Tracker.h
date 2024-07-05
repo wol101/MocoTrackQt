@@ -70,6 +70,7 @@ private:
     std::string m_experimentName;
     std::string m_weightsFile;
 
+    std::string m_processedOsimFile;
     std::string m_statesPath;
     std::string m_controlsPath;
     OpenSim::Model m_model;

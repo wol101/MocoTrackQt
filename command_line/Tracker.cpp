@@ -75,10 +75,11 @@ std::string *Tracker::run()
 
     // save this model to the outputfolder
     m_model = modelProcessor.process();
-    std::string modelPath = pystring::os::path::join(m_outputSubFolder, "01_"s + m_experimentName + "_model.osim"s);
+    m_processedOsimFile = pystring::os::path::join(m_outputSubFolder, "01_"s + m_experimentName + "_model.osim"s);
+    std::cout << "Writing \"" << m_processedOsimFile << "\"\n" << std::flush;
     try
     {
-        m_model.print(modelPath);
+        m_model.print(m_processedOsimFile);
     }
     catch (...)
     {
@@ -205,7 +206,7 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     xml.initiateTag("AnalyzeTool", {{"name", m_experimentName}});
 
     // preamble specifying the general analyses parameters
-    xml.tagAndContent("model_file", m_osimFile);
+    xml.tagAndContent("model_file", m_processedOsimFile);
     xml.tagAndContent("replace_force_set", "false");
     xml.tagAndContent("force_set_files");
     xml.tagAndContent("results_directory", m_outputSubFolder);

@@ -63,7 +63,7 @@ public:
     static bool IsNumber(const std::string &s);
     static bool IsInt(const std::string &s);
     static bool IsBool(const std::string &s);
-    static int ToBool(const std::string &s);
+    static bool ToBool(const std::string &s, bool *valid = nullptr);
     static double ToDouble(const std::string &buf);
     static int ToInt(const std::string &buf);
 

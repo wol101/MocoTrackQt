@@ -297,6 +297,43 @@ void MainWindow::actionChooseBatchFile()
     {
         ui->lineEditBatchFile->setText(fileName);
         settings.setValue("BatchFile", fileName);
+
+        // because we almost certainly have a valid file, try and put the firt line in the rest of the UI
+        try
+        {
+            std::string batchFile = ui->lineEditBatchFile->text().toStdString();
+            if (!(checkReadFile(batchFile))) throw std::runtime_error(batchFile + " cannot be read");
+            std::vector<std::string> columnHeadings;
+            std::vector<std::vector<std::string>> data;
+            readTabDelimitedFile(batchFile, &columnHeadings, &data);
+            if (columnHeadings.size() == 0 || data.size() == 0 || data[0].size() == 0) throw std::runtime_error(batchFile + " contains no data");
+            if (m_batchColumnHeadings != columnHeadings) throw std::runtime_error(batchFile + " column heading mismatch");
+            m_batchData = data;
+            m_batchProcessingIndex = 0;
+            m_batchProcessingRunning = false;
+        }
+        catch (const std::runtime_error& ex)
+        {
+            setStatusString(QString("Run Batch Error: ") + QString::fromStdString(ex.what()));
+            QMessageBox::critical(this, "Run Batch Error", QString::fromStdString(ex.what()));
+            return;
+        }
+        std::string p = pystring::os::path::dirname(ui->lineEditBatchFile->text().toStdString()); // want the paths to be relative to the batch file
+        Q_ASSERT(m_batchProcessingIndex < m_batchData[0].size());
+        ui->lineEditExperimentName->setText(QString::fromStdString(m_batchData[0][m_batchProcessingIndex]));
+        ui->lineEditOSIMFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[1][m_batchProcessingIndex])));
+        ui->lineEditTRCFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[2][m_batchProcessingIndex])));
+        ui->lineEditOutputFolder->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[3][m_batchProcessingIndex])));
+        ui->lineEditWeightsFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[4][m_batchProcessingIndex])));
+        ui->lineEditStartTime->setText(QString::fromStdString(m_batchData[5][m_batchProcessingIndex]));
+        ui->lineEditEndTime->setText(QString::fromStdString(m_batchData[6][m_batchProcessingIndex]));
+        ui->lineEditReserveForce->setText(QString::fromStdString(m_batchData[7][m_batchProcessingIndex]));
+        ui->lineEditGlobalWeight->setText(QString::fromStdString(m_batchData[8][m_batchProcessingIndex]));
+        ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[9][m_batchProcessingIndex]));
+        ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[10][m_batchProcessingIndex]));
+        ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[11][m_batchProcessingIndex]));
+        ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[12][m_batchProcessingIndex]));
+        ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[13][m_batchProcessingIndex]));
     }
 }
 
@@ -429,7 +466,7 @@ void MainWindow::toolButtonRunBatch()
         std::vector<std::string> columnHeadings;
         std::vector<std::vector<std::string>> data;
         readTabDelimitedFile(batchFile, &columnHeadings, &data);
-        if (columnHeadings.size() == 0 || data.size() == 0) throw std::runtime_error(batchFile + " contains no data");
+        if (columnHeadings.size() == 0 || data.size() == 0 || data[0].size() == 0) throw std::runtime_error(batchFile + " contains no data");
         if (m_batchColumnHeadings != columnHeadings) throw std::runtime_error(batchFile + " column heading mismatch");
         m_batchData = data;
         m_batchProcessingIndex = 0;

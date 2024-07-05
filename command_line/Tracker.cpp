@@ -317,8 +317,8 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     xml.terminateTag("AnalyzeTool");
     xml.terminateTag("OpenSimDocument");
 
-    std::ofstream outputFile(filename);
-    outputFile << xml.xmlString();
+    std::ofstream outputFile(filename, std::ios::binary);
+    outputFile.write(xml.xmlString().data(), xml.xmlString().size());
     outputFile.close();
 }
 
@@ -326,13 +326,12 @@ void Tracker::readTabDelimitedFile(const std::string &filename, std::vector<std:
 {
     columnHeadings->clear();
     data->clear();
-    std::stringstream buffer;
+    std::ostringstream buffer;
     try {
-        std::ifstream file(filename);
+        std::ifstream file(filename, std::ios::binary);
         if (!file) return;
         buffer << file.rdbuf();
         file.close();
-
     }
     catch (...)
     {

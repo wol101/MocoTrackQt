@@ -234,7 +234,7 @@ void MainWindow::actionRun()
     auto const time = std::chrono::current_zone()->to_local(m_startTime);
     std::string timeString = std::format("{:%Y-%m-%d %H-%M-%S}", time);
     std::string logPath = pystring::os::path::join(outputFolder.toStdString(), timeString + "_"s + experimentName.toStdString() + ".log"s);
-    m_logStream = std::make_unique<std::ofstream>(logPath);
+    m_logStream = std::make_unique<std::ofstream>(logPath, std::ios::binary);
     log(QString::fromStdString("Simulation started at "s + timeString));
 
     m_tracker = new QProcess(this);
@@ -585,12 +585,14 @@ bool MainWindow::checkWriteFolder(const QString &foldername)
 void MainWindow::readStandardError()
 {
     QString output = m_tracker->readAllStandardError();
+    output.remove('\r');
     log(output);
 }
 
 void MainWindow::readStandardOutput()
 {
     QString output = m_tracker->readAllStandardOutput();
+    output.remove('\r');
     log(output);
 }
 
@@ -680,13 +682,12 @@ void MainWindow::readTabDelimitedFile(const std::string &filename, std::vector<s
 {
     columnHeadings->clear();
     data->clear();
-    std::stringstream buffer;
+    std::ostringstream buffer;
     try {
-        std::ifstream file(filename);
+        std::ifstream file(filename, std::ios::binary);
         if (!file) return;
         buffer << file.rdbuf();
         file.close();
-
     }
     catch (...)
     {

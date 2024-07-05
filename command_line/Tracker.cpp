@@ -144,13 +144,16 @@ std::string *Tracker::run()
     // initialise the solver so we can alter some of the parameters
     OpenSim::MocoStudy mocoStudy = mocoTrack.initialize();
 
-    OpenSim::MocoProblem& problem = mocoStudy.updProblem();
-    OpenSim::MocoControlGoal& effort = dynamic_cast<OpenSim::MocoControlGoal&>(problem.updGoal("control_effort"));
-    effort.setWeight(m_actuatorActivationWeight);
-    for (auto &&actuatorActivationWeight : m_actuatorActivationWeights)
-    {
-        effort.setWeightForControl("/forceset/"s + actuatorActivationWeight.first, actuatorActivationWeight.second);
-    }
+    // if (m_actuatorActivationWeights.size())
+    // {
+        OpenSim::MocoProblem& problem = mocoStudy.updProblem();
+        OpenSim::MocoControlGoal& effort = dynamic_cast<OpenSim::MocoControlGoal&>(problem.updGoal("control_effort"));
+        effort.setWeight(m_actuatorActivationWeight);
+        for (auto &&actuatorActivationWeight : m_actuatorActivationWeights)
+        {
+            effort.setWeightForControl("/forceset/"s + actuatorActivationWeight.first, actuatorActivationWeight.second);
+        }
+    // }
 
     // for (const auto& coordAct : m_model.getComponentList<OpenSim::CoordinateActuator>())
     // {
@@ -179,12 +182,15 @@ std::string *Tracker::run()
 
     // output the required state and control files
     m_statesPath = pystring::os::path::join(m_outputSubFolder, "02_"s + m_experimentName + "_states.sto"s);
+    std::cout << "Writing \"" << m_statesPath << "\"\n" << std::flush;
     OpenSim::STOFileAdapter::write(mocoSolution.exportToStatesTable(), m_statesPath);
     m_controlsPath = pystring::os::path::join(m_outputSubFolder, "03_"s + m_experimentName + "_controls.sto"s);
+    std::cout << "Writing \"" << m_controlsPath << "\"\n" << std::flush;
     OpenSim::STOFileAdapter::write(mocoSolution.exportToControlsTable(), m_controlsPath);
 
     // now run some analyses to get the data we actually want
     std::string analyzePath = pystring::os::path::join(m_outputSubFolder, "04_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
+    std::cout << "Writing \"" << analyzePath << "\"\n" << std::flush;
     createAnalyzerXML(analyzePath);
     OpenSim::AnalyzeTool analyze(analyzePath);
     analyze.run();

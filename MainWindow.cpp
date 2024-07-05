@@ -236,7 +236,7 @@ void MainWindow::actionRun()
 
     m_startTime = std::chrono::system_clock::now();
     auto const time = std::chrono::current_zone()->to_local(m_startTime);
-    std::string timeString = std::format("{:%Y-%m-%d %H-%M-%S}", time);
+    std::string timeString = std::format("{:%Y-%m-%d_%H-%M-%S}", time);
     std::string logPath = pystring::os::path::join(outputFolder.toStdString(), timeString + "_"s + experimentName.toStdString() + ".log"s);
     m_logStream = std::make_unique<std::ofstream>(logPath, std::ios::binary);
     log(QString::fromStdString("Simulation started at "s + timeString));
@@ -652,7 +652,7 @@ void MainWindow::handleFinished()
 
     auto currentTime = std::chrono::system_clock::now();
     auto const time = std::chrono::current_zone()->to_local(currentTime);
-    std::string timeString = std::format("Simulation finished at {:%Y-%m-%d %H-%M-%S}\n", time);
+    std::string timeString = std::format("Simulation finished at {:%Y-%m-%d_%H-%M-%S}\n", time);
     log(QString::fromStdString(timeString));
     auto seconds = duration_cast<std::chrono::seconds>(currentTime - m_startTime);
     timeString = std::format("Duration = {:.3f} hours\n", double(seconds.count()) / 3600);

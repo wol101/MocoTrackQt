@@ -99,6 +99,7 @@ MainWindow::MainWindow(QWidget *parent)
     restoreState(settings.value("windowState").toByteArray());
 
     lookForMocoTrack();
+    setWindowTitle(m_trackerExecutable);
 
     // initialise the batch data
     for (size_t i = 0; i < m_batchColumnHeadings.size(); i++) { m_batchData.push_back(std::vector<std::string>()); }
@@ -404,6 +405,7 @@ void MainWindow::actionChooseMocoTrackExe()
     {
         m_trackerExecutable = fileName;
         settings.setValue("TrackerExecutable", m_trackerExecutable);
+        setWindowTitle(fileName);
     }
 }
 
@@ -446,7 +448,6 @@ void MainWindow::textChangedBatchFile(const QString &text)
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
     settings.setValue("BatchFile", text);
-    setWindowTitle(text);
     setEnabled();
 }
 

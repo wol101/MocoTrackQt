@@ -145,27 +145,13 @@ std::string *Tracker::run()
     // initialise the solver so we can alter some of the parameters
     OpenSim::MocoStudy mocoStudy = mocoTrack.initialize();
 
-    // if (m_actuatorActivationWeights.size())
-    // {
-        OpenSim::MocoProblem& problem = mocoStudy.updProblem();
-        OpenSim::MocoControlGoal& effort = dynamic_cast<OpenSim::MocoControlGoal&>(problem.updGoal("control_effort"));
-        effort.setWeight(m_actuatorActivationWeight);
-        for (auto &&actuatorActivationWeight : m_actuatorActivationWeights)
-        {
-            effort.setWeightForControl("/forceset/"s + actuatorActivationWeight.first, actuatorActivationWeight.second);
-        }
-    // }
-
-    // for (const auto& coordAct : m_model.getComponentList<OpenSim::CoordinateActuator>())
-    // {
-    //     auto coordPath = coordAct.getAbsolutePathString();
-    //     std::cerr << coordPath << "\n";
-    //     auto it = m_actuatorActivationWeights.find(coordPath);
-    //     if (it != m_actuatorActivationWeights.end())
-    //     {
-    //         effort.setWeightForControl(coordPath, it->second);
-    //     }
-    // }
+    OpenSim::MocoProblem& problem = mocoStudy.updProblem();
+    OpenSim::MocoControlGoal& effort = dynamic_cast<OpenSim::MocoControlGoal&>(problem.updGoal("control_effort"));
+    effort.setWeight(m_actuatorActivationWeight);
+    for (auto &&actuatorActivationWeight : m_actuatorActivationWeights)
+    {
+        effort.setWeightForControl("/forceset/"s + actuatorActivationWeight.first, actuatorActivationWeight.second);
+    }
 
     // Update the solver tolerances.
     auto& solver = mocoStudy.updSolver<OpenSim::MocoCasADiSolver>();

@@ -78,7 +78,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEditStartTime->setValue(settings.value("StartTime", "0").toDouble());
     ui->lineEditEndTime->setValue(settings.value("EndTime", "1").toDouble());
     ui->lineEditReserveForce->setValue(settings.value("ReservesForce", "100").toDouble());
-    ui->lineEditGlobalWeight->setValue(settings.value("GlobalWeight", "10").toDouble());
+    ui->lineEditMarkerTrackingWeight->setValue(settings.value("MarkerTrackingWeight", "10").toDouble());
+    ui->lineEditActuatorActivationWeight->setValue(settings.value("ActuatorActivationWeight", "0.001").toDouble());
     ui->lineEditConstraintTolerance->setValue(settings.value("ConstraintTolerance", "1e-4").toDouble());
     ui->lineEditConvergenceTolerance->setValue(settings.value("ConvergenceTolerance", "1e-3").toDouble());
 
@@ -130,7 +131,8 @@ void MainWindow::closeEvent (QCloseEvent *event)
     settings.setValue("StartTime", ui->lineEditStartTime->value());
     settings.setValue("EndTime", ui->lineEditEndTime->value());
     settings.setValue("ReservesForce", ui->lineEditReserveForce->value());
-    settings.setValue("GlobalWeight", ui->lineEditGlobalWeight->value());
+    settings.setValue("MarkerTrackingWeight", ui->lineEditMarkerTrackingWeight->value());
+    settings.setValue("ActuatorActivationWeight", ui->lineEditActuatorActivationWeight->value());
     settings.setValue("ConstraintTolerance", ui->lineEditConstraintTolerance->value());
     settings.setValue("ConvergenceTolerance", ui->lineEditConvergenceTolerance->value());
     settings.setValue("MeshIntervals", ui->spinBoxMeshIntervals->value());
@@ -176,12 +178,13 @@ void MainWindow::basicTimer()
             ui->lineEditStartTime->setText(QString::fromStdString(m_batchData[5][m_batchProcessingIndex]));
             ui->lineEditEndTime->setText(QString::fromStdString(m_batchData[6][m_batchProcessingIndex]));
             ui->lineEditReserveForce->setText(QString::fromStdString(m_batchData[7][m_batchProcessingIndex]));
-            ui->lineEditGlobalWeight->setText(QString::fromStdString(m_batchData[8][m_batchProcessingIndex]));
-            ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[9][m_batchProcessingIndex]));
-            ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[10][m_batchProcessingIndex]));
-            ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[11][m_batchProcessingIndex]));
-            ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[12][m_batchProcessingIndex]));
-            ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[13][m_batchProcessingIndex]));
+            ui->lineEditMarkerTrackingWeight->setText(QString::fromStdString(m_batchData[8][m_batchProcessingIndex]));
+            ui->lineEditActuatorActivationWeight->setText(QString::fromStdString(m_batchData[9][m_batchProcessingIndex]));
+            ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[10][m_batchProcessingIndex]));
+            ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[11][m_batchProcessingIndex]));
+            ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[12][m_batchProcessingIndex]));
+            ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[13][m_batchProcessingIndex]));
+            ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[14][m_batchProcessingIndex]));
             ++m_batchProcessingIndex;
             actionRun();
         }
@@ -203,7 +206,8 @@ void MainWindow::actionRun()
     double startTime = ui->lineEditStartTime->value();
     double endTime = ui->lineEditEndTime->value();
     double reservesForce = ui->lineEditReserveForce->value();
-    double globalWeight = ui->lineEditGlobalWeight->value();
+    double markerTrackingWeight = ui->lineEditMarkerTrackingWeight->value();
+    double actuatorActivationWeight = ui->lineEditActuatorActivationWeight->value();
     double constraintTolerance = ui->lineEditConstraintTolerance->value();
     double convergenceTolerance = ui->lineEditConvergenceTolerance->value();
     int meshIntervals = ui->spinBoxMeshIntervals->value();
@@ -248,7 +252,8 @@ void MainWindow::actionRun()
               << "--startTime" << QString("%1").arg(startTime, 0, 'g', 17)
               << "--endTime" << QString("%1").arg(endTime, 0, 'g', 17)
               << "--reservesOptimalForce" << QString("%1").arg(reservesForce, 0, 'g', 17)
-              << "--globalTrackingWeight" << QString("%1").arg(globalWeight, 0, 'g', 17)
+              << "--markerTrackingWeight" << QString("%1").arg(markerTrackingWeight, 0, 'g', 17)
+              << "--actuatorActivationWeight" << QString("%1").arg(actuatorActivationWeight, 0, 'g', 17)
               << "--convergenceTolerance" << QString("%1").arg(convergenceTolerance, 0, 'g', 17)
               << "--constraintTolerance" << QString("%1").arg(constraintTolerance, 0, 'g', 17)
               << "--addReserves" << QString("%1").arg(addReserves ? "true" : "false")
@@ -328,12 +333,13 @@ void MainWindow::actionChooseBatchFile()
         ui->lineEditStartTime->setText(QString::fromStdString(m_batchData[5][m_batchProcessingIndex]));
         ui->lineEditEndTime->setText(QString::fromStdString(m_batchData[6][m_batchProcessingIndex]));
         ui->lineEditReserveForce->setText(QString::fromStdString(m_batchData[7][m_batchProcessingIndex]));
-        ui->lineEditGlobalWeight->setText(QString::fromStdString(m_batchData[8][m_batchProcessingIndex]));
-        ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[9][m_batchProcessingIndex]));
-        ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[10][m_batchProcessingIndex]));
-        ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[11][m_batchProcessingIndex]));
-        ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[12][m_batchProcessingIndex]));
-        ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[13][m_batchProcessingIndex]));
+        ui->lineEditMarkerTrackingWeight->setText(QString::fromStdString(m_batchData[8][m_batchProcessingIndex]));
+        ui->lineEditActuatorActivationWeight->setText(QString::fromStdString(m_batchData[9][m_batchProcessingIndex]));
+        ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[10][m_batchProcessingIndex]));
+        ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[11][m_batchProcessingIndex]));
+        ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[12][m_batchProcessingIndex]));
+        ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[13][m_batchProcessingIndex]));
+        ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[14][m_batchProcessingIndex]));
     }
 }
 
@@ -486,7 +492,8 @@ void MainWindow::setEnabled()
     ui->lineEditConstraintTolerance->setEnabled(!m_tracker);
     ui->lineEditConvergenceTolerance->setEnabled(!m_tracker);
     ui->lineEditEndTime->setEnabled(!m_tracker);
-    ui->lineEditGlobalWeight->setEnabled(!m_tracker);
+    ui->lineEditMarkerTrackingWeight->setEnabled(!m_tracker);
+    ui->lineEditActuatorActivationWeight->setEnabled(!m_tracker);
     ui->lineEditReserveForce->setEnabled(!m_tracker);
     ui->lineEditStartTime->setEnabled(!m_tracker);
     ui->actionChooseBatchFile->setEnabled(!m_tracker);

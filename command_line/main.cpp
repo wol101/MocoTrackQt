@@ -22,7 +22,8 @@ int main(int argc, const char **argv)
     argparse.AddArgument("-et"s, "--endTime"s, "End time"s, "1.0"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-mi"s, "--meshIntervals"s, "Mesh interval"s, "50"s, 1, false, ArgParse::Int);
     argparse.AddArgument("-rof"s, "--reservesOptimalForce"s, "Reserves optimal force"s, "100.0"s, 1, false, ArgParse::Double);
-    argparse.AddArgument("-gtw"s, "--globalTrackingWeight"s, "Global tracking weight"s, "10.0"s, 1, false, ArgParse::Double);
+    argparse.AddArgument("-mtw"s, "--markerTrackingWeight"s, "Global marker tracking weight"s, "10.0"s, 1, false, ArgParse::Double);
+    argparse.AddArgument("-aaw"s, "--actuatorActivationWeight"s, "Global actuator activation weight"s, "0.001"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-cvt"s, "--convergenceTolerance"s, "Convergence tolerance"s, "1e-3"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-cst"s, "--constraintTolerance"s, "Constraint tolerance"s, "1e-4"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-ar"s, "--addReserves"s, "Add reserve actuators to the model"s, "false"s, 1, false, ArgParse::Bool);
@@ -44,7 +45,8 @@ int main(int argc, const char **argv)
     double endTime = 1.0;
     int meshIntervals = 50;
     double reservesOptimalForce = 100.0;
-    double globalTrackingWeight = 10.0;
+    double markerTrackingWeight = 10.0;
+    double actuatorActivationWeight = 0.001;
     double convergenceTolerance = 1e-3;
     double constraintTolerance = 1e-4;
     bool addReserves = false;
@@ -59,7 +61,8 @@ int main(int argc, const char **argv)
     argparse.Get("--endTime"s, &endTime);
     argparse.Get("--meshIntervals"s, &meshIntervals);
     argparse.Get("--reservesOptimalForce"s, &reservesOptimalForce);
-    argparse.Get("--globalTrackingWeight"s, &globalTrackingWeight);
+    argparse.Get("--markerTrackingWeight"s, &markerTrackingWeight);
+    argparse.Get("--actuatorActivationWeight"s, &actuatorActivationWeight);
     argparse.Get("--convergenceTolerance"s, &convergenceTolerance);
     argparse.Get("--constraintTolerance"s, &constraintTolerance);
     argparse.Get("--addReserves"s, &addReserves);
@@ -75,7 +78,8 @@ int main(int argc, const char **argv)
     tracker.setEndTime(endTime);
     tracker.setMeshIntervals(meshIntervals);
     tracker.setReservesOptimalForce(reservesOptimalForce);
-    tracker.setGlobalTrackingWeight(globalTrackingWeight);
+    tracker.setMarkerTrackingWeight(markerTrackingWeight);
+    tracker.setActuatorActivationWeight(actuatorActivationWeight);
     tracker.setConvergenceTolerance(convergenceTolerance);
     tracker.setConstraintTolerance(constraintTolerance);
     tracker.setAddReserves(addReserves);

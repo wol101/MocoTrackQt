@@ -99,7 +99,7 @@ std::string *Tracker::run()
     mocoTrack.set_allow_unused_references(true); // allows markers in the trc file not to be used - warning this can easily be an error that needs trapping
 
     // adjust the weights
-    mocoTrack.set_markers_global_tracking_weight(m_globalTrackingWeight);
+    mocoTrack.set_markers_global_tracking_weight(m_markerTrackingWeight);
 
     if (m_weightsFileData.size() && m_weightsFileData[0].size())
     {
@@ -109,7 +109,7 @@ std::string *Tracker::run()
             {
                 if (m_weightsFileData[0][j] ==  m_model.getMarkerSet().get(i).getName())
                 {
-                    m_markerWeights[m_weightsFileData[0][j]] = std::stod(m_weightsFileData[1][j]);
+                    m_markerTrackingWeights[m_weightsFileData[0][j]] = std::stod(m_weightsFileData[1][j]);
                     break;
                 }
             }
@@ -120,17 +120,17 @@ std::string *Tracker::run()
             {
                 if (m_weightsFileData[0][j] ==  m_model.getForceSet().get(i).getName() && m_model.getForceSet().get(i).getConcreteClassName() == "CoordinateActuator"s)
                 {
-                    m_actuatorWeights[m_weightsFileData[0][j]] = std::stod(m_weightsFileData[1][j]);
+                    m_actuatorActivationWeights[m_weightsFileData[0][j]] = std::stod(m_weightsFileData[1][j]);
                     break;
                 }
             }
         }
     }
 
-    if (m_markerWeights.size())
+    if (m_markerTrackingWeights.size())
     {
         OpenSim::MocoWeightSet markerWeights;
-        for (auto &&markerWeight : m_markerWeights)
+        for (auto &&markerWeight : m_markerTrackingWeights)
         {
             markerWeights.cloneAndAppend({markerWeight.first, markerWeight.second});
         }
@@ -146,18 +146,18 @@ std::string *Tracker::run()
 
     OpenSim::MocoProblem& problem = mocoStudy.updProblem();
     OpenSim::MocoControlGoal& effort = dynamic_cast<OpenSim::MocoControlGoal&>(problem.updGoal("control_effort"));
-    effort.setWeight(1.0);
-    for (auto &&actuatorWeight : m_actuatorWeights)
+    effort.setWeight(m_actuatorActivationWeight);
+    for (auto &&actuatorActivationWeight : m_actuatorActivationWeights)
     {
-        effort.setWeightForControl("/forceset/"s + actuatorWeight.first, actuatorWeight.second);
+        effort.setWeightForControl("/forceset/"s + actuatorActivationWeight.first, actuatorActivationWeight.second);
     }
 
     // for (const auto& coordAct : m_model.getComponentList<OpenSim::CoordinateActuator>())
     // {
     //     auto coordPath = coordAct.getAbsolutePathString();
     //     std::cerr << coordPath << "\n";
-    //     auto it = m_actuatorWeights.find(coordPath);
-    //     if (it != m_actuatorWeights.end())
+    //     auto it = m_actuatorActivationWeights.find(coordPath);
+    //     if (it != m_actuatorActivationWeights.end())
     //     {
     //         effort.setWeightForControl(coordPath, it->second);
     //     }
@@ -358,6 +358,16 @@ void Tracker::readTabDelimitedFile(const std::string &filename, std::vector<std:
     }
 }
 
+double Tracker::actuatorActivationWeight() const
+{
+    return m_actuatorActivationWeight;
+}
+
+void Tracker::setActuatorActivationWeight(double newActuatorActivationWeight)
+{
+    m_actuatorActivationWeight = newActuatorActivationWeight;
+}
+
 void Tracker::setTrcFile(const std::string &newTrcFile)
 {
     m_trcFile = newTrcFile;
@@ -443,14 +453,14 @@ void Tracker::setReservesOptimalForce(double newReservesOptimalForce)
     m_reservesOptimalForce = newReservesOptimalForce;
 }
 
-double Tracker::globalTrackingWeight() const
+double Tracker::markerTrackingWeight() const
 {
-    return m_globalTrackingWeight;
+    return m_markerTrackingWeight;
 }
 
-void Tracker::setGlobalTrackingWeight(double newGlobalTrackingWeight)
+void Tracker::setMarkerTrackingWeight(double newMarkerTrackingWeight)
 {
-    m_globalTrackingWeight = newGlobalTrackingWeight;
+    m_markerTrackingWeight = newMarkerTrackingWeight;
 }
 
 double Tracker::convergenceTolerance() const

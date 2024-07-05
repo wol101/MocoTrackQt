@@ -79,7 +79,7 @@ private:
     std::chrono::time_point<std::chrono::system_clock> m_startTime = std::chrono::system_clock::from_time_t(0);
     QVector<QIcon> m_iconList;
     int m_iconListIndex = 0;
-    std::vector<std::string> m_batchColumnHeadings = {"RunID","OSIMFile","TRCFile","OutputFolder","MarkerWeights","StartTime","EndTime","ReserveForce","GlobalWeight","ConvergeTol","ConstraintTol","MeshIntervals","AddReserves","RemoveMuscles"};
+    std::vector<std::string> m_batchColumnHeadings = {"RunID","OSIMFile","TRCFile","OutputFolder","MarkerWeights","StartTime","EndTime","ReserveForce","MarkerWeight","ActuatorWeight","ConvergeTol","ConstraintTol","MeshIntervals","AddReserves","RemoveMuscles"};
     std::vector<std::vector<std::string>> m_batchData;
     size_t m_batchProcessingIndex = 0;
     bool m_batchProcessingRunning = false;

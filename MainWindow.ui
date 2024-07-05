@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>961</width>
-    <height>563</height>
+    <width>1057</width>
+    <height>526</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -176,25 +176,6 @@
        <string>Run</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_5">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Start Time</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="1">
         <widget class="QLabel" name="label_2">
          <property name="sizePolicy">
@@ -213,6 +194,35 @@
           <bool>true</bool>
          </property>
         </widget>
+       </item>
+       <item row="1" column="8">
+        <widget class="QCheckBox" name="checkBoxRemoveMuscles">
+         <property name="text">
+          <string>Remove Muscles</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="5">
+        <widget class="QLabel" name="label_6">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Converge Tolerance</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="LineEditDouble" name="lineEditMarkerTrackingWeight"/>
        </item>
        <item row="0" column="2">
         <widget class="QLabel" name="label_4">
@@ -233,8 +243,17 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="3">
-        <widget class="QLabel" name="label_5">
+       <item row="1" column="6">
+        <widget class="LineEditDouble" name="lineEditConstraintTolerance"/>
+       </item>
+       <item row="1" column="2">
+        <widget class="LineEditDouble" name="lineEditReserveForce"/>
+       </item>
+       <item row="1" column="1">
+        <widget class="LineEditDouble" name="lineEditEndTime"/>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -242,7 +261,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>Global Weight</string>
+          <string>Start Time</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -252,45 +271,10 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="4">
-        <widget class="QLabel" name="label_6">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Converge Tolerance</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
+       <item row="1" column="5">
+        <widget class="LineEditDouble" name="lineEditConvergenceTolerance"/>
        </item>
-       <item row="0" column="5">
-        <widget class="QLabel" name="label_7">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Constraint Tolerance</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="6">
+       <item row="0" column="7">
         <widget class="QLabel" name="label_3">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -309,32 +293,10 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="7">
-        <widget class="QCheckBox" name="checkBoxAddReserves">
-         <property name="text">
-          <string>Add Reserves</string>
-         </property>
-        </widget>
-       </item>
        <item row="1" column="0">
         <widget class="LineEditDouble" name="lineEditStartTime"/>
        </item>
-       <item row="1" column="1">
-        <widget class="LineEditDouble" name="lineEditEndTime"/>
-       </item>
-       <item row="1" column="2">
-        <widget class="LineEditDouble" name="lineEditReserveForce"/>
-       </item>
-       <item row="1" column="3">
-        <widget class="LineEditDouble" name="lineEditGlobalWeight"/>
-       </item>
-       <item row="1" column="4">
-        <widget class="LineEditDouble" name="lineEditConvergenceTolerance"/>
-       </item>
-       <item row="1" column="5">
-        <widget class="LineEditDouble" name="lineEditConstraintTolerance"/>
-       </item>
-       <item row="1" column="6">
+       <item row="1" column="7">
         <widget class="QSpinBox" name="spinBoxMeshIntervals">
          <property name="minimum">
           <number>2</number>
@@ -344,10 +306,61 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="7">
-        <widget class="QCheckBox" name="checkBoxRemoveMuscles">
+       <item row="0" column="6">
+        <widget class="QLabel" name="label_7">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
-          <string>Remove Muscles</string>
+          <string>Constraint Tolerance</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="8">
+        <widget class="QCheckBox" name="checkBoxAddReserves">
+         <property name="text">
+          <string>Add Reserves</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QLabel" name="label_5">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Marker Weight</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="4">
+        <widget class="LineEditDouble" name="lineEditActuatorActivationWeight"/>
+       </item>
+       <item row="0" column="4">
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>Actuator Weight</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -361,7 +374,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>961</width>
+     <width>1057</width>
      <height>21</height>
     </rect>
    </property>
@@ -501,7 +514,7 @@
   <tabstop>lineEditStartTime</tabstop>
   <tabstop>lineEditEndTime</tabstop>
   <tabstop>lineEditReserveForce</tabstop>
-  <tabstop>lineEditGlobalWeight</tabstop>
+  <tabstop>lineEditMarkerTrackingWeight</tabstop>
   <tabstop>lineEditConvergenceTolerance</tabstop>
   <tabstop>lineEditConstraintTolerance</tabstop>
   <tabstop>checkBoxAddReserves</tabstop>

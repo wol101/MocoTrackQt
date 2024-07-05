@@ -44,8 +44,8 @@ public:
     double reservesOptimalForce() const;
     void setReservesOptimalForce(double newReservesOptimalForce);
 
-    double globalTrackingWeight() const;
-    void setGlobalTrackingWeight(double newGlobalTrackingWeight);
+    double markerTrackingWeight() const;
+    void setMarkerTrackingWeight(double newMarkerTrackingWeight);
 
     double convergenceTolerance() const;
     void setConvergenceTolerance(double newConvergenceTolerance);
@@ -55,6 +55,9 @@ public:
 
     std::string weightsFile() const;
     void setWeightsFile(const std::string &newWeightsFile);
+
+    double actuatorActivationWeight() const;
+    void setActuatorActivationWeight(double newActuatorActivationWeight);
 
 private:
     void createAnalyzerXML(const std::string &filename);
@@ -76,7 +79,8 @@ private:
     double m_endTime = 1.0;
     int m_meshIntervals = 50;
     double m_reservesOptimalForce = 100.0;
-    double m_globalTrackingWeight = 10.0;
+    double m_markerTrackingWeight = 10.0;
+    double m_actuatorActivationWeight = 0.001;
     double m_convergenceTolerance = 1e-3;
     double m_constraintTolerance = 1e-4;
 
@@ -85,8 +89,8 @@ private:
 
     std::vector<std::string> m_weightsFileColumnHeadings = {"Name", "Weight"};
     std::vector<std::vector<std::string>> m_weightsFileData;
-    std::map<std::string, double> m_markerWeights;
-    std::map<std::string, double> m_actuatorWeights;
+    std::map<std::string, double> m_markerTrackingWeights;
+    std::map<std::string, double> m_actuatorActivationWeights;
 
     std::string m_lastError;
 };

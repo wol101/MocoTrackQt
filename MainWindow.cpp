@@ -515,7 +515,9 @@ void MainWindow::setStatusString(const QString &s)
 void MainWindow::log(const QString &text)
 {
     if (m_logStream) (*m_logStream) << text.toStdString();
-    ui->plainTextEditOutput->appendPlainText(text);
+    // appendPlainText adds a paragraph so we need to remove any trailing \n
+    if (text.endsWith('\n')) ui->plainTextEditOutput->appendPlainText(text.chopped(1));
+    else ui->plainTextEditOutput->appendPlainText(text);
     ui->plainTextEditOutput->repaint();
 }
 

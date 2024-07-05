@@ -101,7 +101,7 @@ std::string *Tracker::run()
     // adjust the weights
     mocoTrack.set_markers_global_tracking_weight(m_globalTrackingWeight);
 
-    if (m_weightsFileData[0].size())
+    if (m_weightsFileData.size() && m_weightsFileData[0].size())
     {
         for (int i = 0; i < m_model.getMarkerSet().getSize(); ++i)
         {

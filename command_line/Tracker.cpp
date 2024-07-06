@@ -16,7 +16,6 @@
 #include <OpenSim/Analyses/BodyKinematics.h>
 
 #include <filesystem>
-#include <chrono>
 
 using namespace std::string_literals;
 
@@ -30,20 +29,26 @@ std::string Tracker::trcFile() const
 std::string *Tracker::run()
 {
     m_lastError.clear();
-    // everything lives in a datetime folder within the output folder
-    auto const time = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
-    std::string folderName = std::format("{:%Y-%m-%d_%H-%M-%S}", time);
-    m_outputSubFolder = pystring::os::path::join(m_outputFolder, folderName);
+
+    if (std::filesystem::exists(m_outputFolder))
+    {
+        if (!std::filesystem::is_directory(m_outputFolder))
+        {
+            m_lastError = "Error: Tracker::run() \"" + m_outputFolder + "\" exists and is not a folder";
+            return &m_lastError;
+        }
+    }
+    else
     try
     {
-        std::filesystem::create_directories(m_outputSubFolder);
+        std::filesystem::create_directories(m_outputFolder);
     }
     catch (...)
     {
-        m_lastError = "Error: Tracker::run() unable to create \"" + m_outputSubFolder + "\"";
+        m_lastError = "Error: Tracker::run() unable to create \"" + m_outputFolder + "\"";
         return &m_lastError;
     }
-    WorkingDirectoryGuard workingDirectoryGuard(m_outputSubFolder);
+    WorkingDirectoryGuard workingDirectoryGuard(m_outputFolder);
 
     if (m_weightsFile.size())
     {
@@ -75,7 +80,7 @@ std::string *Tracker::run()
 
     // save this model to the outputfolder
     m_model = modelProcessor.process();
-    m_processedOsimFile = pystring::os::path::join(m_outputSubFolder, "01_"s + m_experimentName + "_model.osim"s);
+    m_processedOsimFile = pystring::os::path::join(m_outputFolder, "01_"s + m_experimentName + "_model.osim"s);
     std::cout << "Writing \"" << m_processedOsimFile << "\"\n" << std::flush;
     try
     {
@@ -83,7 +88,7 @@ std::string *Tracker::run()
     }
     catch (...)
     {
-        m_lastError = "Error: Tracker::run() unable to create \"" + m_outputSubFolder + "\"";
+        m_lastError = "Error: Tracker::run() unable to create \"" + m_outputFolder + "\"";
         return &m_lastError;
     }
 
@@ -168,15 +173,15 @@ std::string *Tracker::run()
     }
 
     // output the required state and control files
-    m_statesPath = pystring::os::path::join(m_outputSubFolder, "02_"s + m_experimentName + "_states.sto"s);
+    m_statesPath = pystring::os::path::join(m_outputFolder, "02_"s + m_experimentName + "_states.sto"s);
     std::cout << "Writing \"" << m_statesPath << "\"\n" << std::flush;
     OpenSim::STOFileAdapter::write(mocoSolution.exportToStatesTable(), m_statesPath);
-    m_controlsPath = pystring::os::path::join(m_outputSubFolder, "03_"s + m_experimentName + "_controls.sto"s);
+    m_controlsPath = pystring::os::path::join(m_outputFolder, "03_"s + m_experimentName + "_controls.sto"s);
     std::cout << "Writing \"" << m_controlsPath << "\"\n" << std::flush;
     OpenSim::STOFileAdapter::write(mocoSolution.exportToControlsTable(), m_controlsPath);
 
     // now run some analyses to get the data we actually want
-    std::string analyzePath = pystring::os::path::join(m_outputSubFolder, "04_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
+    std::string analyzePath = pystring::os::path::join(m_outputFolder, "04_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
     std::cout << "Writing \"" << analyzePath << "\"\n" << std::flush;
     createAnalyzerXML(analyzePath);
     OpenSim::AnalyzeTool analyze(analyzePath);
@@ -195,7 +200,7 @@ void Tracker::createAnalyzerXML(const std::string &filename)
     xml.tagAndContent("model_file", m_processedOsimFile);
     xml.tagAndContent("replace_force_set", "false");
     xml.tagAndContent("force_set_files");
-    xml.tagAndContent("results_directory", m_outputSubFolder);
+    xml.tagAndContent("results_directory", m_outputFolder);
     xml.tagAndContent("output_precision", "8");
     xml.tagAndContent("initial_time", std::format("{:.17g}", m_startTime));
     xml.tagAndContent("final_time", std::format("{:.17g}", m_endTime));

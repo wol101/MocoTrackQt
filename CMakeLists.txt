@@ -27,6 +27,8 @@ set(PROJECT_SOURCES
     DoubleValidator.h
     LineEditDouble.cpp
     LineEditDouble.h
+    LineEditPath.cpp
+    LineEditPath.h
     main.cpp
     MainWindow.cpp
     MainWindow.h

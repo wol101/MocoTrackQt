@@ -74,7 +74,6 @@ private:
     std::string m_statesPath;
     std::string m_controlsPath;
     OpenSim::Model m_model;
-    std::string m_outputSubFolder;
 
     double m_startTime = 0;
     double m_endTime = 1.0;

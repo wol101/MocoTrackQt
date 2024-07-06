@@ -9,6 +9,7 @@
 #include <QSettings>
 #include <QMessageBox>
 #include <QTimer>
+#include <QRegularExpressionValidator>
 
 #include <thread>
 #include <chrono>
@@ -30,11 +31,15 @@ MainWindow::MainWindow(QWidget *parent)
     QFont editorFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     ui->plainTextEditOutput->setFont(editorFont);
 
-    // this allows me to use a hidden button to maintain the appearance of the grid layout
-    // QSizePolicy sizePolicy = ui->pushButtonHidden->sizePolicy();
-    // sizePolicy.setRetainSizeWhenHidden(true);
-    // ui->pushButtonHidden->setSizePolicy(sizePolicy);
-    // ui->pushButtonHidden->hide();
+    ui->lineEditOSIMFile->setPathType(LineEditPath::FileForOpen);
+    ui->lineEditTRCFile->setPathType(LineEditPath::FileForOpen);
+    ui->lineEditBatchFile->setPathType(LineEditPath::FileForOpen);
+    ui->lineEditWeightsFile->setPathType(LineEditPath::FileForOpen);
+    ui->lineEditOutputFolder->setPathType(LineEditPath::Folder);
+
+    QRegularExpression validExperimentName("^[^<>:\"/\\|?*]+$"); // this just excludes characters that are not valid in windows paths
+    QRegularExpressionValidator *reValidator = new QRegularExpressionValidator(validExperimentName);
+    ui->lineEditExperimentName->setValidator(reValidator);
 
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionRun, &QAction::triggered, this, &MainWindow::actionRun);
@@ -214,17 +219,15 @@ void MainWindow::actionRun()
     int meshIntervals = ui->spinBoxMeshIntervals->value();
     bool addReserves = ui->checkBoxAddReserves->isChecked();
     bool removeMuscles = ui->checkBoxRemoveMuscles->isChecked();
-    static QRegularExpression validExperimentName("^[^<>:\"/\\|?*]+$"); // this just excludes characters that are not valid in windows paths
     try
     {
         if (!checkReadFile(m_trackerExecutable, true)) throw std::runtime_error("trackerExecutable cannot be run");
         if (!checkReadFile(osimFile)) throw std::runtime_error("OSIM file cannot be read");
         if (!checkReadFile(trcFile)) throw std::runtime_error("TRC file cannot be read");
         if (!checkWriteFolder(outputFolder)) throw std::runtime_error("Output folder cannot be used");
-        if (!validExperimentName.match(experimentName).hasMatch()) throw std::runtime_error("Experiment name not valid");
+        int pos; if (ui->lineEditExperimentName->validator()->validate(experimentName, pos) != QValidator::Acceptable) throw std::runtime_error("Experiment name not valid");
         if (startTime >= endTime) throw std::runtime_error("Invalid start and end times");
         if (weightsFile.size() && !checkReadFile(weightsFile)) throw std::runtime_error("Weights file cannot be read");
-
     }
     catch (const std::runtime_error& ex)
     {
@@ -238,7 +241,9 @@ void MainWindow::actionRun()
     m_startTime = std::chrono::system_clock::now();
     auto const time = std::chrono::current_zone()->to_local(m_startTime);
     std::string timeString = std::format("{:%Y-%m-%d_%H-%M-%S}", time);
-    std::string logPath = pystring::os::path::join(outputFolder.toStdString(), timeString + "_"s + experimentName.toStdString() + ".log"s);
+    std::string newOutputFolder = pystring::os::path::join(outputFolder.toStdString(), timeString + "_"s +experimentName.toStdString());
+    if (!checkWriteFolder(newOutputFolder)) { setStatusString("actionRun(): unexpected error creating newOutputFolder"); return; }
+    std::string logPath = pystring::os::path::join(newOutputFolder, timeString + "_"s + experimentName.toStdString() + ".log"s);
     m_logStream = std::make_unique<std::ofstream>(logPath, std::ios::binary);
     log(QString::fromStdString("Simulation started at "s + timeString));
 
@@ -247,7 +252,7 @@ void MainWindow::actionRun()
     QStringList arguments;
     arguments << "--trcFile" << trcFile
               << "--osimFile" << osimFile
-              << "--outputFolder" << outputFolder
+              << "--outputFolder" << QString::fromStdString(newOutputFolder)
               << "--experimentName" << experimentName
               << "--weightsFile" << weightsFile
               << "--startTime" << QString("%1").arg(startTime, 0, 'g', 17)

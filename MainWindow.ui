@@ -22,7 +22,7 @@
       </property>
       <layout class="QGridLayout" name="gridLayout">
        <item row="0" column="1">
-        <widget class="QLineEdit" name="lineEditOSIMFile"/>
+        <widget class="LineEditPath" name="lineEditOSIMFile"/>
        </item>
        <item row="1" column="0">
         <widget class="QPushButton" name="pushButtonTRCFile">
@@ -39,7 +39,7 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QLineEdit" name="lineEditTRCFile"/>
+        <widget class="LineEditPath" name="lineEditTRCFile"/>
        </item>
       </layout>
      </widget>
@@ -61,7 +61,7 @@
         <widget class="QLineEdit" name="lineEditExperimentName"/>
        </item>
        <item row="0" column="2">
-        <widget class="QLineEdit" name="lineEditOutputFolder"/>
+        <widget class="LineEditPath" name="lineEditOutputFolder"/>
        </item>
        <item row="1" column="0">
         <widget class="QPushButton" name="pushButtonAutofill">
@@ -87,7 +87,7 @@
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="QLineEdit" name="lineEditWeightsFile"/>
+        <widget class="LineEditPath" name="lineEditWeightsFile"/>
        </item>
        <item row="1" column="0">
         <widget class="QPushButton" name="pushButtonBatchFile">
@@ -97,7 +97,7 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QLineEdit" name="lineEditBatchFile"/>
+        <widget class="LineEditPath" name="lineEditBatchFile"/>
        </item>
       </layout>
      </widget>
@@ -493,11 +493,16 @@
   </action>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>LineEditDouble</class>
-   <extends>QLineEdit</extends>
-   <header>LineEditDouble.h</header>
-  </customwidget>
+ <customwidget>
+  <class>LineEditDouble</class>
+  <extends>QLineEdit</extends>
+  <header>LineEditDouble.h</header>
+ </customwidget>
+ <customwidget>
+  <class>LineEditPath</class>
+  <extends>QLineEdit</extends>
+  <header>LineEditPath.h</header>
+ </customwidget>
  </customwidgets>
  <tabstops>
   <tabstop>pushButtonOSIMFile</tabstop>

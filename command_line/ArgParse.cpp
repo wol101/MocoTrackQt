@@ -499,13 +499,17 @@ bool ArgParse::ToBool(const std::string &s, bool *valid)
     return false;
 }
 
-double ArgParse::ToDouble(const std::string &buf)
+double ArgParse::ToDouble(const std::string &buf, bool *valid)
 {
+    if (valid) *valid = true;
+    if (!IsNumber(buf)) { if (valid) *valid = false; return 0; }
     return std::strtod(buf.c_str(), nullptr); // note: not using std::stod because I do not want exceptions to be thrown
 }
 
- int ArgParse::ToInt(const std::string &buf)
+ int ArgParse::ToInt(const std::string &buf, bool *valid)
 {
+    if (valid) *valid = true;
+    if (!IsInt(buf)) { if (valid) *valid = false; return 0; }
     return int(std::strtol(buf.c_str(), nullptr, 0)); // note: not using std::stoi because I do not want exceptions to be thrown
 }
 

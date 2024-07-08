@@ -257,6 +257,7 @@ void MainWindow::actionRun()
     std::string logPath = pystring::os::path::join(newOutputFolder, timeString + "_"s + experimentName.toStdString() + ".log"s);
     m_logStream = std::make_unique<std::ofstream>(logPath, std::ios::binary);
     log(QString::fromStdString("Simulation started at "s + timeString));
+    if (m_batchProcessingRunning) log(QString("Running from batch file \"%1\"").arg(ui->lineEditBatchFile->text()));
 
     m_tracker = new QProcess(this);
     QString program = QFileInfo(m_trackerExecutable).absoluteFilePath();
@@ -284,7 +285,7 @@ void MainWindow::actionRun()
     QStringList commandLine;
     commandLine.append(program.count(" ") ? QString("\"") + program + QString("\"") : program );
     for (auto &&argument : arguments) { commandLine.append(argument.count(" ") ? QString("\"") + argument + QString("\"") : argument); }
-    log(commandLine.join(" "));
+    log(commandLine.join("\n"));
 
     m_tracker->start(program, arguments, QIODeviceBase::ReadWrite | QIODeviceBase::Unbuffered);
     if (m_tracker->waitForStarted(10000) == false)

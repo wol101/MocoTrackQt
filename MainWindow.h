@@ -85,6 +85,8 @@ private:
     bool m_batchProcessingRunning = false;
 
     std::unique_ptr<std::ofstream> m_logStream;
+    double m_watchDogTimer = 0;
+    double m_watchDogTimerLimit = 3600; // time in seconds to wait for activity on log
 
 };
 #endif // MAINWINDOW_H

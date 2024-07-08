@@ -109,6 +109,8 @@ MainWindow::MainWindow(QWidget *parent)
     // initialise the batch data
     for (size_t i = 0; i < m_batchColumnHeadings.size(); i++) { m_batchData.push_back(std::vector<std::string>()); }
 
+    m_watchDogTimerLimit = settings.value("WatchDogTimerLimit", "3600").toDouble();
+
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::basicTimer);
     m_timer->start(100); // 100ms is fast enough for this application
@@ -197,6 +199,15 @@ void MainWindow::basicTimer()
 
         // check the controls
         setEnabled();
+
+        // check the watchdog
+        double watchDogTimer = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        if (m_tracker && watchDogTimer - m_watchDogTimer > m_watchDogTimerLimit)
+        {
+            setStatusString("Watchdog trying to stop MocoTrack");
+            m_tracker->kill();
+            std::this_thread::sleep_for(5000ms);
+        }
     }
 }
 
@@ -284,6 +295,7 @@ void MainWindow::actionRun()
         m_tracker = nullptr;
         setStatusString("Error starting up the GA");
     }
+    m_watchDogTimer = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
 void MainWindow::actionStop()
@@ -564,6 +576,7 @@ void MainWindow::setStatusString(const QString &s)
 
 void MainWindow::log(const QString &text)
 {
+    m_watchDogTimer = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
     if (m_logStream) (*m_logStream) << text.toStdString();
     // appendPlainText adds a paragraph so we need to remove any trailing \n
     if (text.endsWith('\n')) ui->plainTextEditOutput->appendPlainText(text.chopped(1));

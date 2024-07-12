@@ -22,6 +22,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    static void layoutSpacing(QWidget *container);
+
 public slots:
     void actionRun();
     void actionStop();

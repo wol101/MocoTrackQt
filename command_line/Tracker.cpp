@@ -143,6 +143,9 @@ std::string *Tracker::run()
         mocoTrack.set_markers_weight_set(markerWeights);
     }
 
+    // no derivatives in these data
+    mocoTrack.set_track_reference_position_derivatives(true);
+
     // set the time subsample
     mocoTrack.set_initial_time(m_startTime);
     mocoTrack.set_final_time(m_endTime);

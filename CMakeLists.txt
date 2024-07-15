@@ -23,6 +23,8 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
+    BasicXMLSyntaxHighlighter.cpp
+    BasicXMLSyntaxHighlighter.h
     DoubleValidator.cpp
     DoubleValidator.h
     LineEditDouble.cpp
@@ -33,6 +35,9 @@ set(PROJECT_SOURCES
     MainWindow.cpp
     MainWindow.h
     MainWindow.ui
+    TextEditDialog.cpp
+    TextEditDialog.h
+    TextEditDialog.ui
     resources.qrc
     windows_resources.rc
     pocketpy/pocketpy.h

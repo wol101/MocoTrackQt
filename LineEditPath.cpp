@@ -1,9 +1,11 @@
 #include "LineEditPath.h"
+#include "TextEditDialog.h"
 
 #include <QMenu>
 #include <QFileDialog>
 #include <QFocusEvent>
 #include <QValidator>
+#include <QMessageBox>
 
 LineEditPath::LineEditPath(QWidget *parent) :
     QLineEdit(parent)
@@ -23,6 +25,8 @@ void LineEditPath::menuRequestPath(const QPoint &pos)
     {
     case FileForOpen:
         menu->addAction(tr("Select File to Open..."));
+        menu->addSeparator();
+        menu->addAction(tr("Edit File..."));
         break;
     case FileForSave:
         menu->addAction(tr("Select File to Save..."));
@@ -49,6 +53,37 @@ void LineEditPath::menuRequestPath(const QPoint &pos)
         {
             QString file = QFileDialog::getSaveFileName(this, "Select required file to save", this->text());
             if (!file.isEmpty()) this->setText(file);
+        }
+        if (action->text() == tr("Edit File..."))
+        {
+            TextEditDialog textEditDialog(this);
+            QString fileName = this->text();
+            if (fileName.endsWith(".xml", Qt::CaseInsensitive) || fileName.endsWith(".osim", Qt::CaseInsensitive)) textEditDialog.useXMLSyntaxHighlighter();
+            QFile editFile(fileName);
+            if (editFile.open(QFile::ReadOnly) == false)
+            {
+                QMessageBox::warning(this, tr("Open File Error"), QString("menuRequestPath: Unable to open file (read):\n%1").arg(fileName));
+                return;
+            }
+            QByteArray editFileData = editFile.readAll();
+            editFile.close();
+            QString editFileText = QString::fromUtf8(editFileData);
+
+            textEditDialog.setEditorText(editFileText);
+
+            int status = textEditDialog.exec();
+
+            if (status == QDialog::Accepted) // write the new settings
+            {
+                if (editFile.open(QFile::WriteOnly) == false)
+                {
+                    QMessageBox::warning(this, tr("Open File Error"), QString("menuRequestPath: Unable to open file (write):\n%1").arg(fileName));
+                    return;
+                }
+                editFileData = textEditDialog.editorText().toUtf8();
+                editFile.write(editFileData);
+                editFile.close();
+            }
         }
     }
     delete menu;
@@ -148,5 +183,4 @@ QString LineEditPath::text() const
     return QLineEdit::text();
 #endif
 }
-
 

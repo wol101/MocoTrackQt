@@ -44,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionRun, &QAction::triggered, this, &MainWindow::actionRun);
+    connect(ui->actionRunBatch, &QAction::triggered, this, &MainWindow::toolButtonRunBatch);
     connect(ui->actionStop, &QAction::triggered, this, &MainWindow::actionStop);
     connect(ui->actionChooseOSIMFile, &QAction::triggered, this, &MainWindow::actionChooseOSIMFile);
     connect(ui->actionChooseTRCFile, &QAction::triggered, this, &MainWindow::actionChooseTRCFile);

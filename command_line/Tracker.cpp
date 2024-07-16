@@ -162,7 +162,7 @@ std::string *Tracker::run()
     }
 
     // Update the solver tolerances.
-    auto& solver = mocoStudy.updSolver<OpenSim::MocoCasADiSolver>();
+    auto& solver = mocoStudy.updSolver<OpenSim::MocoCasADiSolver>(); // could also be OpenSim::MocoTropterSolver
     solver.set_optim_convergence_tolerance(m_convergenceTolerance);
     solver.set_optim_constraint_tolerance(m_constraintTolerance);
     solver.set_num_mesh_intervals(m_meshIntervals);

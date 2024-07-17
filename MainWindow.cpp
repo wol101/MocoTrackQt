@@ -532,6 +532,8 @@ void MainWindow::setEnabled()
     ui->lineEditOSIMFile->setEnabled(!m_tracker);
     ui->lineEditOutputFolder->setEnabled(!m_tracker);
     ui->lineEditTRCFile->setEnabled(!m_tracker);
+    ui->lineEditBatchFile->setEnabled(!m_tracker);
+    ui->lineEditWeightsFile->setEnabled(!m_tracker);
     ui->pushButtonAutofill->setEnabled(!m_tracker);
     ui->pushButtonOSIMFile->setEnabled(!m_tracker);
     ui->pushButtonOutputFolder->setEnabled(!m_tracker);

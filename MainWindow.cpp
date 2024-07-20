@@ -582,10 +582,16 @@ void MainWindow::setStatusString(const QString &s)
 void MainWindow::log(const QString &text)
 {
     m_watchDogTimer = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
-    if (m_logStream) (*m_logStream) << text.toStdString();
-    // appendPlainText adds a paragraph so we need to remove any trailing \n
-    if (text.endsWith('\n')) ui->plainTextEditOutput->appendPlainText(text.chopped(1));
-    else ui->plainTextEditOutput->appendPlainText(text);
+    if (text.endsWith('\n'))
+    {
+        if (m_logStream) (*m_logStream) << text.toStdString();
+        ui->plainTextEditOutput->appendPlainText(text.chopped(1)); // appendPlainText adds a paragraph so we need to remove any trailing \n
+    }
+    else
+    {
+        if (m_logStream) (*m_logStream) << text.toStdString() + "\n"s; // to get the same effect with the logStream we need to add a \n if the string does not already have one
+        ui->plainTextEditOutput->appendPlainText(text);
+    }
     ui->plainTextEditOutput->repaint();
 }
 

@@ -55,4 +55,6 @@ compile_commands.json
 
 build
 inno_setup/inno_setup
+.vs/
+
 

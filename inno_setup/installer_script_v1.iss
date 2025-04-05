@@ -4,6 +4,10 @@
 #define MyAppURL "http://www.animalsimulation.org"
 #define MyAppExeName "MocoTrackQt.exe"
 
+#define QtBuildFolder "Desktop_Qt_6_8_2_MSVC2022_64bit-Release"
+
+; this script assumes that both the command line and the GUI version are built using QtCreator with the default build paths
+
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
 ; Do not use the same AppId value in installers for other applications.
@@ -34,23 +38,23 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\MocoTrackQt.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\generic\*"; DestDir: "{app}\generic"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\iconengines\*"; DestDir: "{app}\iconengines"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\imageformats\*"; DestDir: "{app}\imageformats"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\networkinformation\*"; DestDir: "{app}\networkinformation"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\platforms\*"; DestDir: "{app}\platforms"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\styles\*"; DestDir: "{app}\styles"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\tls\*"; DestDir: "{app}\tls"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\translations\*"; DestDir: "{app}\translations"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\{#QtBuildFolder}\MocoTrackQt.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\build\{#QtBuildFolder}\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\build\{#QtBuildFolder}\generic\*"; DestDir: "{app}\generic"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\{#QtBuildFolder}\iconengines\*"; DestDir: "{app}\iconengines"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\{#QtBuildFolder}\imageformats\*"; DestDir: "{app}\imageformats"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\{#QtBuildFolder}\networkinformation\*"; DestDir: "{app}\networkinformation"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\{#QtBuildFolder}\platforms\*"; DestDir: "{app}\platforms"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\{#QtBuildFolder}\styles\*"; DestDir: "{app}\styles"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\{#QtBuildFolder}\tls\*"; DestDir: "{app}\tls"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\build\{#QtBuildFolder}\translations\*"; DestDir: "{app}\translations"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-Source: "..\command_line\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\mocotrack.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\command_line\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\command_line\build\{#QtBuildFolder}\mocotrack.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\command_line\build\{#QtBuildFolder}\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
-Source: "..\build\Desktop_Qt_6_8_1_MSVC2022_64bit-Release\vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
+Source: "..\build\{#QtBuildFolder}\vc_redist.x64.exe"; DestDir: {tmp}; Flags: deleteafterinstall
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

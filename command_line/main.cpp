@@ -44,6 +44,7 @@ int main(int argc, const char **argv)
     double startTime = 0;
     double endTime = 1.0;
     int meshIntervals = 50;
+    int maxIterations = 3000;
     double reservesOptimalForce = 100.0;
     double markerTrackingWeight = 10.0;
     double actuatorActivationWeight = 0.001;
@@ -60,6 +61,7 @@ int main(int argc, const char **argv)
     argparse.Get("--startTime"s, &startTime);
     argparse.Get("--endTime"s, &endTime);
     argparse.Get("--meshIntervals"s, &meshIntervals);
+    argparse.Get("--maxIterations"s, &maxIterations);
     argparse.Get("--reservesOptimalForce"s, &reservesOptimalForce);
     argparse.Get("--markerTrackingWeight"s, &markerTrackingWeight);
     argparse.Get("--actuatorActivationWeight"s, &actuatorActivationWeight);
@@ -77,6 +79,7 @@ int main(int argc, const char **argv)
     tracker.setStartTime(startTime);
     tracker.setEndTime(endTime);
     tracker.setMeshIntervals(meshIntervals);
+    tracker.setMaxInterations(maxIterations);
     tracker.setReservesOptimalForce(reservesOptimalForce);
     tracker.setMarkerTrackingWeight(markerTrackingWeight);
     tracker.setActuatorActivationWeight(actuatorActivationWeight);

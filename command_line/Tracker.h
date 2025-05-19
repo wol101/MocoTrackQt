@@ -59,6 +59,9 @@ public:
     double actuatorActivationWeight() const;
     void setActuatorActivationWeight(double newActuatorActivationWeight);
 
+    int maxInterations() const;
+    void setMaxInterations(int newMaxInterations);
+
 private:
     void createAnalyzerXML(const std::string &filename);
 
@@ -78,6 +81,7 @@ private:
     double m_startTime = 0;
     double m_endTime = 1.0;
     int m_meshIntervals = 50;
+    int m_maxInterations = 3000;
     double m_reservesOptimalForce = 100.0;
     double m_markerTrackingWeight = 10.0;
     double m_actuatorActivationWeight = 0.001;

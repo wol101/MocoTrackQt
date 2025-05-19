@@ -91,6 +91,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEditConvergenceTolerance->setValue(settings.value("ConvergenceTolerance", "1e-3").toDouble());
 
     ui->spinBoxMeshIntervals->setValue(settings.value("MeshIntervals", "50").toInt());
+    ui->spinBoxMaxIterations->setValue(settings.value("MaxIterations", "3000").toInt());
 
     ui->checkBoxAddReserves->setChecked(settings.value("AddReserves", "").toBool());
     ui->checkBoxRemoveMuscles->setChecked(settings.value("RemoveMuscles", "").toBool());
@@ -146,6 +147,7 @@ void MainWindow::closeEvent (QCloseEvent *event)
     settings.setValue("ConstraintTolerance", ui->lineEditConstraintTolerance->value());
     settings.setValue("ConvergenceTolerance", ui->lineEditConvergenceTolerance->value());
     settings.setValue("MeshIntervals", ui->spinBoxMeshIntervals->value());
+    settings.setValue("MaxIterations", ui->spinBoxMaxIterations->value());
     settings.setValue("AddReserves", ui->checkBoxAddReserves->isChecked());
     settings.setValue("RemoveMuscles", ui->checkBoxRemoveMuscles->isChecked());
     settings.setValue("geometry", saveGeometry());
@@ -193,8 +195,9 @@ void MainWindow::basicTimer()
             ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[10][m_batchProcessingIndex]));
             ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[11][m_batchProcessingIndex]));
             ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[12][m_batchProcessingIndex]));
-            ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[13][m_batchProcessingIndex]));
-            ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[14][m_batchProcessingIndex]));
+            ui->spinBoxMaxIterations->setValue(std::stoi(m_batchData[13][m_batchProcessingIndex]));
+            ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[14][m_batchProcessingIndex]));
+            ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[15][m_batchProcessingIndex]));
             ++m_batchProcessingIndex;
             actionRun();
         }
@@ -230,6 +233,7 @@ void MainWindow::actionRun()
     double constraintTolerance = ui->lineEditConstraintTolerance->value();
     double convergenceTolerance = ui->lineEditConvergenceTolerance->value();
     int meshIntervals = ui->spinBoxMeshIntervals->value();
+    int maxIterations = ui->spinBoxMaxIterations->value();
     bool addReserves = ui->checkBoxAddReserves->isChecked();
     bool removeMuscles = ui->checkBoxRemoveMuscles->isChecked();
     try
@@ -278,7 +282,8 @@ void MainWindow::actionRun()
               << "--constraintTolerance" << QString("%1").arg(constraintTolerance, 0, 'g', 17)
               << "--addReserves" << QString("%1").arg(addReserves ? "true" : "false")
               << "--removeMuscles" << QString("%1").arg(removeMuscles ? "true" : "false")
-              << "--meshIntervals" << QString("%1").arg(meshIntervals);
+              << "--meshIntervals" << QString("%1").arg(meshIntervals)
+              << "--maxIterations" << QString("%1").arg(maxIterations);
 
     connect(m_tracker, &QProcess::readyReadStandardOutput, this, &MainWindow::readStandardOutput);
     connect(m_tracker, &QProcess::readyReadStandardError, this, &MainWindow::readStandardError);
@@ -359,8 +364,9 @@ void MainWindow::actionChooseBatchFile()
         ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[10][m_batchProcessingIndex]));
         ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[11][m_batchProcessingIndex]));
         ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[12][m_batchProcessingIndex]));
-        ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[13][m_batchProcessingIndex]));
-        ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[14][m_batchProcessingIndex]));
+        ui->spinBoxMaxIterations->setValue(std::stoi(m_batchData[13][m_batchProcessingIndex]));
+        ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[14][m_batchProcessingIndex]));
+        ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[15][m_batchProcessingIndex]));
     }
 }
 
@@ -543,6 +549,7 @@ void MainWindow::setEnabled()
     ui->pushButtonWeightsFile->setEnabled(!m_tracker);
     ui->pushButtonBatchFile->setEnabled(!m_tracker);
     ui->spinBoxMeshIntervals->setEnabled(!m_tracker);
+    ui->spinBoxMaxIterations->setEnabled(!m_tracker);
     ui->toolButtonRunBatch->setEnabled(true);
 }
 

@@ -166,6 +166,7 @@ std::string *Tracker::run()
     solver.set_optim_convergence_tolerance(m_convergenceTolerance);
     solver.set_optim_constraint_tolerance(m_constraintTolerance);
     solver.set_num_mesh_intervals(m_meshIntervals);
+    solver.set_optim_max_iterations(m_maxInterations);
 
     // now run the solver
     OpenSim::MocoSolution mocoSolution = mocoStudy.solve();
@@ -357,6 +358,16 @@ void Tracker::readTabDelimitedFile(const std::string &filename, std::vector<std:
             else { (*data)[j].push_back(""); } // pad any lines that are incomplete
         }
     }
+}
+
+int Tracker::maxInterations() const
+{
+    return m_maxInterations;
+}
+
+void Tracker::setMaxInterations(int newMaxInterations)
+{
+    m_maxInterations = newMaxInterations;
 }
 
 double Tracker::actuatorActivationWeight() const

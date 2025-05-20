@@ -20,7 +20,8 @@ int main(int argc, const char **argv)
     argparse.AddArgument("-wf"s, "--weightsFile"s, "File containing weights for markers and actuators"s, ""s, 1, false, ArgParse::String);
     argparse.AddArgument("-st"s, "--startTime"s, "Start time"s, "0.0"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-et"s, "--endTime"s, "End time"s, "1.0"s, 1, false, ArgParse::Double);
-    argparse.AddArgument("-mi"s, "--meshIntervals"s, "Mesh interval"s, "50"s, 1, false, ArgParse::Int);
+    argparse.AddArgument("-min"s, "--meshIntervals"s, "Mesh interval"s, "50"s, 1, false, ArgParse::Int);
+    argparse.AddArgument("-mit"s, "--maxIterations"s, "Maximun number of iterations"s, "3000"s, 1, false, ArgParse::Int);
     argparse.AddArgument("-rof"s, "--reservesOptimalForce"s, "Reserves optimal force"s, "100.0"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-mtw"s, "--markerTrackingWeight"s, "Global marker tracking weight"s, "10.0"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-aaw"s, "--actuatorActivationWeight"s, "Global actuator activation weight"s, "0.001"s, 1, false, ArgParse::Double);

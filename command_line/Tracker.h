@@ -62,6 +62,9 @@ public:
     int maxInterations() const;
     void setMaxInterations(int newMaxInterations);
 
+    double meshInterval() const;
+    void setMeshInterval(double newMeshInterval);
+
 private:
     void createAnalyzerXML(const std::string &filename);
 

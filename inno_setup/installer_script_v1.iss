@@ -1,10 +1,10 @@
 #define MyAppName "MocoTrackQt"
-#define MyAppVersion "v1"
+#define MyAppVersion "v1.1"
 #define MyAppPublisher "WIS"
 #define MyAppURL "http://www.animalsimulation.org"
 #define MyAppExeName "MocoTrackQt.exe"
 
-#define QtBuildFolder "Desktop_Qt_6_8_2_MSVC2022_64bit-Release"
+#define QtBuildFolder "Desktop_Qt_6_10_1_MSVC2022_64bit-Release"
 
 ; this script assumes that both the command line and the GUI version are built using QtCreator with the default build paths
 

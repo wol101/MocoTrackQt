@@ -1,0 +1,21 @@
+To build first create a build folder:
+
+mkdir build
+
+The cd to that build directory
+
+cd build
+
+In the build directory run cmake pointing to the CMakeLists.txt here
+
+cmake -D CMAKE_BUILD_TYPE=Release ..
+
+Then on linux or mac just run (you can use -j "$(nproc)" for parallel builds):
+
+make
+
+On Windows you can use msbuild:
+
+MSBuild.exe .\mocotrack.sln /p:Configuration=Release
+
+Windows can be configured for make or nmake and you can use .sln files directly from the GUI too.

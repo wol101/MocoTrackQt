@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QTimer>
 #include <QRegularExpressionValidator>
+#include <QInputDialog>
 
 #include <thread>
 #include <chrono>
@@ -51,6 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionChooseOutputFolder, &QAction::triggered, this, &MainWindow::actionChooseOutputFolder);
     connect(ui->actionChooseBatchFile, &QAction::triggered, this, &MainWindow::actionChooseBatchFile);
     connect(ui->actionChooseMocoTrackExe, &QAction::triggered, this, &MainWindow::actionChooseMocoTrackExe);
+    connect(ui->actionSetWatchdogTime, &QAction::triggered, this, &MainWindow::actionSetWatchdogTime);
     connect(ui->pushButtonOSIMFile, &QPushButton::clicked, this, &MainWindow::actionChooseOSIMFile);
     connect(ui->pushButtonTRCFile, &QPushButton::clicked, this, &MainWindow::actionChooseTRCFile);
     connect(ui->pushButtonOutputFolder, &QPushButton::clicked, this, &::MainWindow::actionChooseOutputFolder);
@@ -68,6 +70,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->toolButtonRunBatch, &QPushButton::clicked, this, &MainWindow::toolButtonRunBatch);
 
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
+    setStatusString(QString("Read settings from \"") + settings.fileName() + QString("\""));
     ui->lineEditExperimentName->setText(settings.value("ExperimentName", "").toString());
     ui->lineEditOSIMFile->setText(settings.value("OSIMFile", "").toString());
     ui->lineEditTRCFile->setText(settings.value("TRCFile", "").toString());
@@ -205,13 +208,16 @@ void MainWindow::basicTimer()
         // check the controls
         setEnabled();
 
-        // check the watchdog
-        double watchDogTimer = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
-        if (m_tracker && watchDogTimer - m_watchDogTimer > m_watchDogTimerLimit)
+        // check the watchdog if set
+        if (m_watchDogTimerLimit > 0)
         {
-            setStatusString("Watchdog trying to stop MocoTrack");
-            m_tracker->kill();
-            std::this_thread::sleep_for(5000ms);
+            double watchDogTimer = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+            if (m_tracker && watchDogTimer - m_watchDogTimer > m_watchDogTimerLimit)
+            {
+                setStatusString("Watchdog trying to stop MocoTrack");
+                m_tracker->kill();
+                std::this_thread::sleep_for(5000ms);
+            }
         }
     }
 }
@@ -382,6 +388,18 @@ void MainWindow::actionChooseWeightsFile()
     }
 }
 
+void MainWindow::actionSetWatchdogTime()
+{
+    QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
+    bool ok = false;
+    double value = QInputDialog::getDouble(this, "Watchdog Timer", "Please enter a value in seconds (ignored if <= 0):", m_watchDogTimerLimit, 0, std::numeric_limits<double>::max(), 2, &ok);
+    if (ok)
+    {
+        m_watchDogTimerLimit = value;
+        settings.setValue("WatchDogTimerLimit", m_watchDogTimerLimit);
+    }
+}
+
 void MainWindow::pushButtonAutofill()
 {
     auto const time = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
@@ -525,6 +543,7 @@ void MainWindow::setEnabled()
     ui->lineEditStartTime->setEnabled(!m_tracker);
     ui->actionChooseBatchFile->setEnabled(!m_tracker);
     ui->actionChooseMocoTrackExe->setEnabled(!m_tracker);
+    ui->actionSetWatchdogTime->setEnabled(!m_tracker);
     ui->actionChooseOSIMFile->setEnabled(!m_tracker);
     ui->actionChooseOutputFolder->setEnabled(!m_tracker);
     ui->actionChooseTRCFile->setEnabled(!m_tracker);

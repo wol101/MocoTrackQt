@@ -416,7 +416,7 @@
      <x>0</x>
      <y>0</y>
      <width>1249</width>
-     <height>26</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -442,6 +442,7 @@
     <addaction name="actionStop"/>
     <addaction name="separator"/>
     <addaction name="actionChooseMocoTrackExe"/>
+    <addaction name="actionSetWatchdogTime"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuAutomate"/>
@@ -539,6 +540,14 @@
    </property>
    <property name="toolTip">
     <string>Run the set of experiments in the batch file</string>
+   </property>
+  </action>
+  <action name="actionSetWatchdogTime">
+   <property name="text">
+    <string>Watchdog...</string>
+   </property>
+   <property name="toolTip">
+    <string>Set the watchdog time in seconds</string>
    </property>
   </action>
  </widget>

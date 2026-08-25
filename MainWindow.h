@@ -33,6 +33,7 @@ public slots:
     void actionChooseBatchFile();
     void actionChooseWeightsFile();
     void actionChooseMocoTrackExe();
+    void actionSetWatchdogTime();
     void pushButtonAutofill();
     void textChangedTRCFile(const QString &text);
     void textChangedOSIMFile(const QString &text);

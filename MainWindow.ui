@@ -161,7 +161,7 @@
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0">
-        <widget class="QPlainTextEdit" name="plainTextEditOutput">
+        <widget class="PlainTextEditEx" name="plainTextEditOutput">
          <property name="verticalScrollBarPolicy">
           <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOn</enum>
          </property>
@@ -416,7 +416,7 @@
      <x>0</x>
      <y>0</y>
      <width>1249</width>
-     <height>18</height>
+     <height>33</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -561,6 +561,11 @@
    <class>LineEditPath</class>
    <extends>QLineEdit</extends>
    <header>LineEditPath.h</header>
+  </customwidget>
+  <customwidget>
+   <class>PlainTextEditEx</class>
+   <extends>QPlainTextEdit</extends>
+   <header>PlainTextEditEx.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

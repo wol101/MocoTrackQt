@@ -40,6 +40,8 @@ set(PROJECT_SOURCES
     MainWindow.cpp
     MainWindow.h
     MainWindow.ui
+    PlainTextEditEx.cpp
+    PlainTextEditEx.h
     TextEditDialog.cpp
     TextEditDialog.h
     TextEditDialog.ui

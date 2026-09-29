@@ -18,6 +18,7 @@ int main(int argc, const char **argv)
     argparse.AddArgument("-e"s, "--experimentName"s, "Experiment descriptor"s, ""s, 1, true, ArgParse::String);
     // optional arguments
     argparse.AddArgument("-wf"s, "--weightsFile"s, "File containing weights for markers and actuators"s, ""s, 1, false, ArgParse::String);
+    argparse.AddArgument("-gf"s, "--guessFile"s, "File containing an old solution to be used as a starting guess"s, ""s, 1, false, ArgParse::String);
     argparse.AddArgument("-st"s, "--startTime"s, "Start time"s, "0.0"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-et"s, "--endTime"s, "End time"s, "1.0"s, 1, false, ArgParse::Double);
     argparse.AddArgument("-min"s, "--meshIntervals"s, "Number of mesh intervals"s, "50"s, 1, false, ArgParse::Int);
@@ -43,6 +44,7 @@ int main(int argc, const char **argv)
     std::string outputFolder;
     std::string experimentName;
     std::string weightsFile;
+    std::string guessFile;
     double startTime = 0;
     double endTime = 1.0;
     int meshIntervals = 50;
@@ -61,6 +63,7 @@ int main(int argc, const char **argv)
     argparse.Get("--outputFolder"s, &outputFolder);
     argparse.Get("--experimentName"s, &experimentName);
     argparse.Get("--weightsFile"s, &weightsFile);
+    argparse.Get("--guessFile"s, &guessFile);
     argparse.Get("--startTime"s, &startTime);
     argparse.Get("--endTime"s, &endTime);
     argparse.Get("--meshIntervals"s, &meshIntervals);
@@ -79,6 +82,7 @@ int main(int argc, const char **argv)
     tracker.setOutputFolder(outputFolder);
     tracker.setExperimentName(experimentName);
     tracker.setWeightsFile(weightsFile);
+    tracker.setGuessFile(guessFile);
     tracker.setStartTime(startTime);
     tracker.setEndTime(endTime);
     tracker.setMeshIntervals(meshIntervals);

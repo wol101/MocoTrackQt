@@ -15,8 +15,6 @@
 #include <OpenSim/Analyses/Kinematics.h>
 #include <OpenSim/Analyses/BodyKinematics.h>
 
-#include <filesystem>
-
 using namespace std::string_literals;
 
 Tracker::Tracker() {}
@@ -168,6 +166,35 @@ std::string *Tracker::run()
     solver.set_num_mesh_intervals(m_meshIntervals);
 
     solver.set_optim_max_iterations(m_maxInterations);
+
+    // if there is a guess file use it
+    if (!m_guessFile.empty())
+    {
+        if (!fileIsReadable(m_guessFile))
+        {
+            m_lastError = "Error: Tracker::run() unable to read \"" + m_guessFile + "\"";
+            return &m_lastError;
+        }
+
+        // 1. Create a fresh, correctly-sized guess for the NEW problem
+        OpenSim::MocoTrajectory guess = solver.createGuess("bounds");
+
+        // 2. Load the old solution which may have fewer actuators and a different time grid
+        OpenSim::MocoTrajectory oldSolution(m_guessFile);
+
+        // 3. Resample the old solution onto the new guess's time grid
+        oldSolution.resampleWithNumTimes(guess.getNumTimes());
+        // (alternative: oldSolution.resample(guess.getTime());)
+
+        // 4. Copy over matching state variables (coordinates/speeds, and any activation states that exist in both models)
+        guess.insertStatesTrajectory(oldSolution.exportToStatesTable(), true);
+
+        // 5. Copy over controls for actuators that still exist in the new model
+        std::vector<std::string> oldControlNames = oldSolution.getControlNames();
+        for (const auto& name : oldControlNames) {
+            guess.setControl(name, oldSolution.getControl(name));
+        }
+    }
 
     // now run the solver
     OpenSim::MocoSolution mocoSolution = mocoStudy.solve();
@@ -361,6 +388,15 @@ void Tracker::readTabDelimitedFile(const std::string &filename, std::vector<std:
     }
 }
 
+bool Tracker::fileIsReadable(const std::filesystem::path& p)
+{
+    if (!std::filesystem::exists(p) || !std::filesystem::is_regular_file(p))
+        return false;
+
+    std::ifstream f(p);
+    return f.good();
+}
+
 double Tracker::meshInterval() const
 {
     double meshInterval = (m_endTime - m_startTime) / double(m_meshIntervals);
@@ -525,6 +561,16 @@ std::string Tracker::weightsFile() const
 void Tracker::setWeightsFile(const std::string &newWeightsFile)
 {
     m_weightsFile = newWeightsFile;
+}
+
+std::string Tracker::guessFile() const
+{
+    return m_guessFile;
+}
+
+void Tracker::setGuessFile(const std::string &newGuessFile)
+{
+    m_guessFile = newGuessFile;
 }
 
 

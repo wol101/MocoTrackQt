@@ -56,6 +56,9 @@ public:
     std::string weightsFile() const;
     void setWeightsFile(const std::string &newWeightsFile);
 
+    std::string guessFile() const;
+    void setGuessFile(const std::string &newGuessFile);
+
     double actuatorActivationWeight() const;
     void setActuatorActivationWeight(double newActuatorActivationWeight);
 
@@ -69,12 +72,14 @@ private:
     void createAnalyzerXML(const std::string &filename);
 
     static void readTabDelimitedFile(const std::string &filename, std::vector<std::string> *columnHeadings, std::vector<std::vector<std::string>> *data);
+    static bool fileIsReadable(const std::filesystem::path& p);
 
     std::string m_trcFile;
     std::string m_osimFile;
     std::string m_outputFolder;
     std::string m_experimentName;
     std::string m_weightsFile;
+    std::string m_guessFile;
 
     std::string m_processedOsimFile;
     std::string m_statesPath;

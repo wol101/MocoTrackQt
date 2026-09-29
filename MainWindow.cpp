@@ -58,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->pushButtonOutputFolder, &QPushButton::clicked, this, &::MainWindow::actionChooseOutputFolder);
     connect(ui->pushButtonBatchFile, &QPushButton::clicked, this, &::MainWindow::actionChooseBatchFile);
     connect(ui->pushButtonWeightsFile, &QPushButton::clicked, this, &::MainWindow::actionChooseWeightsFile);
+    connect(ui->pushButtonGuessFile, &QPushButton::clicked, this, &::MainWindow::actionChooseGuessFile);
     connect(ui->pushButtonRun, &QPushButton::clicked, this, &MainWindow::actionRun);
     connect(ui->pushButtonStop, &QPushButton::clicked, this, &MainWindow::actionStop);
     connect(ui->pushButtonAutofill, &QPushButton::clicked, this, &MainWindow::pushButtonAutofill);
@@ -67,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->lineEditExperimentName, &QLineEdit::textChanged, this, &MainWindow::textChangedExperimentName);
     connect(ui->lineEditBatchFile, &QLineEdit::textChanged, this, &MainWindow::textChangedBatchFile);
     connect(ui->lineEditWeightsFile, &QLineEdit::textChanged, this, &MainWindow::textChangedWeightsFile);
+    connect(ui->lineEditGuessFile, &QLineEdit::textChanged, this, &MainWindow::textChangedGuessFile);
     connect(ui->toolButtonRunBatch, &QPushButton::clicked, this, &MainWindow::toolButtonRunBatch);
 
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
@@ -185,22 +187,23 @@ void MainWindow::basicTimer()
         {
             std::string p = pystring::os::path::dirname(ui->lineEditBatchFile->text().toStdString()); // want the paths to be relative to the batch file
             Q_ASSERT(m_batchProcessingIndex < m_batchData[0].size());
-            ui->lineEditExperimentName->setText(QString::fromStdString(m_batchData[0][m_batchProcessingIndex]));
-            ui->lineEditOSIMFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[1][m_batchProcessingIndex])));
-            ui->lineEditTRCFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[2][m_batchProcessingIndex])));
-            ui->lineEditOutputFolder->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[3][m_batchProcessingIndex])));
-            ui->lineEditWeightsFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[4][m_batchProcessingIndex])));
-            ui->lineEditStartTime->setText(QString::fromStdString(m_batchData[5][m_batchProcessingIndex]));
-            ui->lineEditEndTime->setText(QString::fromStdString(m_batchData[6][m_batchProcessingIndex]));
-            ui->lineEditReserveForce->setText(QString::fromStdString(m_batchData[7][m_batchProcessingIndex]));
-            ui->lineEditMarkerTrackingWeight->setText(QString::fromStdString(m_batchData[8][m_batchProcessingIndex]));
-            ui->lineEditActuatorActivationWeight->setText(QString::fromStdString(m_batchData[9][m_batchProcessingIndex]));
-            ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[10][m_batchProcessingIndex]));
-            ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[11][m_batchProcessingIndex]));
-            ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[12][m_batchProcessingIndex]));
-            ui->spinBoxMaxIterations->setValue(std::stoi(m_batchData[13][m_batchProcessingIndex]));
-            ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[14][m_batchProcessingIndex]));
-            ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[15][m_batchProcessingIndex]));
+            ui->lineEditExperimentName->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "RunID"s)][m_batchProcessingIndex]));
+            ui->lineEditOSIMFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "OSIMFile"s)][m_batchProcessingIndex])));
+            ui->lineEditTRCFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "TRCFile"s)][m_batchProcessingIndex])));
+            ui->lineEditOutputFolder->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "OutputFolder"s)][m_batchProcessingIndex])));
+            ui->lineEditWeightsFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "MarkerWeights"s)][m_batchProcessingIndex])));
+            ui->lineEditGuessFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "GuessFile"s)][m_batchProcessingIndex])));
+            ui->lineEditStartTime->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "StartTime"s)][m_batchProcessingIndex]));
+            ui->lineEditEndTime->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "EndTime"s)][m_batchProcessingIndex]));
+            ui->lineEditReserveForce->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "ReserveForce"s)][m_batchProcessingIndex]));
+            ui->lineEditMarkerTrackingWeight->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "MarkerWeight"s)][m_batchProcessingIndex]));
+            ui->lineEditActuatorActivationWeight->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "ActuatorWeight"s)][m_batchProcessingIndex]));
+            ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "ConvergeTol"s)][m_batchProcessingIndex]));
+            ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "ConstraintTol"s)][m_batchProcessingIndex]));
+            ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[findIndex(m_batchColumnHeadings, "MeshIntervals"s)][m_batchProcessingIndex]));
+            ui->spinBoxMaxIterations->setValue(std::stoi(m_batchData[findIndex(m_batchColumnHeadings, "MaxIterations"s)][m_batchProcessingIndex]));
+            ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[findIndex(m_batchColumnHeadings, "AddReserves"s)][m_batchProcessingIndex]));
+            ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[findIndex(m_batchColumnHeadings, "RemoveMuscles"s)][m_batchProcessingIndex]));
             ++m_batchProcessingIndex;
             actionRun();
         }
@@ -231,6 +234,7 @@ void MainWindow::actionRun()
     QString outputFolder = QFileInfo(ui->lineEditOutputFolder->text()).absoluteFilePath();
     QString experimentName = ui->lineEditExperimentName->text();
     QString weightsFile = ui->lineEditWeightsFile->text();
+    QString guessFile = ui->lineEditGuessFile->text();
     double startTime = ui->lineEditStartTime->value();
     double endTime = ui->lineEditEndTime->value();
     double reservesForce = ui->lineEditReserveForce->value();
@@ -279,6 +283,7 @@ void MainWindow::actionRun()
               << "--outputFolder" << QString::fromStdString(newOutputFolder)
               << "--experimentName" << experimentName
               << "--weightsFile" << weightsFile
+              << "--guessFile" << guessFile
               << "--startTime" << QString("%1").arg(startTime, 0, 'g', 17)
               << "--endTime" << QString("%1").arg(endTime, 0, 'g', 17)
               << "--reservesOptimalForce" << QString("%1").arg(reservesForce, 0, 'g', 17)
@@ -335,7 +340,7 @@ void MainWindow::actionChooseBatchFile()
         ui->lineEditBatchFile->setText(fileName);
         settings.setValue("BatchFile", fileName);
 
-        // because we almost certainly have a valid file, try and put the firt line in the rest of the UI
+        // because we almost certainly have a valid file, try and put the first line in the rest of the UI
         try
         {
             std::string batchFile = ui->lineEditBatchFile->text().toStdString();
@@ -344,7 +349,7 @@ void MainWindow::actionChooseBatchFile()
             std::vector<std::vector<std::string>> data;
             readTabDelimitedFile(batchFile, &columnHeadings, &data);
             if (columnHeadings.size() == 0 || data.size() == 0 || data[0].size() == 0) throw std::runtime_error(batchFile + " contains no data");
-            if (m_batchColumnHeadings != columnHeadings) throw std::runtime_error(batchFile + " column heading mismatch");
+            if (allIn(m_batchColumnHeadings, columnHeadings)) throw std::runtime_error(batchFile + " column heading mismatch");
             m_batchData = data;
             m_batchProcessingIndex = 0;
             m_batchProcessingRunning = false;
@@ -385,6 +390,18 @@ void MainWindow::actionChooseWeightsFile()
     {
         ui->lineEditWeightsFile->setText(fileName);
         settings.setValue("WeightsFile", fileName);
+    }
+}
+
+void MainWindow::actionChooseGuessFile()
+{
+    QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
+    QString lastFile = settings.value("GuessFile", "").toString();
+    QString fileName = QFileDialog::getOpenFileName(this, "Choose guess file", lastFile, "Guess Files (*.sto)");
+    if (fileName.size())
+    {
+        ui->lineEditGuessFile->setText(fileName);
+        settings.setValue("GuessFile", fileName);
     }
 }
 
@@ -488,6 +505,13 @@ void MainWindow::textChangedWeightsFile(const QString &text)
     setEnabled();
 }
 
+void MainWindow::textChangedGuessFile(const QString &text)
+{
+    QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
+    settings.setValue("GuessFile", text);
+    setEnabled();
+}
+
 void MainWindow::textChangedBatchFile(const QString &text)
 {
     QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "AnimalSimulationLaboratory", "MocoTrackQt");
@@ -518,7 +542,7 @@ void MainWindow::toolButtonRunBatch()
         std::vector<std::vector<std::string>> data;
         readTabDelimitedFile(batchFile, &columnHeadings, &data);
         if (columnHeadings.size() == 0 || data.size() == 0 || data[0].size() == 0) throw std::runtime_error(batchFile + " contains no data");
-        if (m_batchColumnHeadings != columnHeadings) throw std::runtime_error(batchFile + " column heading mismatch");
+        if (allIn(m_batchColumnHeadings, columnHeadings)) throw std::runtime_error(batchFile + " column heading mismatch");
         m_batchData = data;
         m_batchProcessingIndex = 0;
         m_batchProcessingRunning = true;
@@ -755,7 +779,7 @@ void MainWindow::lookForMocoTrack()
         return;
     }
     QStringList matchingFiles;
-    FindFiles(defaultExecutable, startSearch, &matchingFiles);
+    findFiles(defaultExecutable, startSearch, &matchingFiles);
     for (auto &&matchingFile : matchingFiles)
     {
         m_trackerExecutable = matchingFile;
@@ -769,13 +793,13 @@ void MainWindow::lookForMocoTrack()
     actionChooseMocoTrackExe();
 }
 
-void MainWindow::FindFiles(const QString &filename, const QString &path, QStringList *matchingFiles)
+void MainWindow::findFiles(const QString &filename, const QString &path, QStringList *matchingFiles)
 {
     QDir dir(path);
     QFileInfoList items = dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot); // QDir::NoDotAndDotDot needs to be specified with what is wanted otherwise the list is empty
     for (auto &&item : items)
     {
-        if (item.isDir()) { FindFiles(filename, item.fileName(), matchingFiles); }
+        if (item.isDir()) { findFiles(filename, item.fileName(), matchingFiles); }
         else { if (filename == item.fileName()) matchingFiles->append(dir.absoluteFilePath(item.fileName())); }
     }
 }
@@ -855,5 +879,23 @@ void MainWindow::layoutSpacing(QWidget *container)
             item->setSpacing(std::min(item->spacing(), spacing));
         }
     }
+}
+
+int64_t MainWindow::findIndex(const std::vector<std::string>& v, const std::string &value)
+{
+    auto it = std::find(v.begin(), v.end(), value);
+    if (it == v.end())
+        return -1;   // not found
+
+    return static_cast<int64_t>(it - v.begin());
+}
+
+bool MainWindow::allIn(const std::vector<std::string>& a, const std::vector<std::string>& b)
+{
+    for (const auto& s : a)
+        if (findIndex(b, s) == -1)
+            return false;
+
+    return true;
 }
 

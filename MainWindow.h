@@ -32,6 +32,7 @@ public slots:
     void actionChooseOutputFolder();
     void actionChooseBatchFile();
     void actionChooseWeightsFile();
+    void actionChooseGuessFile();
     void actionChooseMocoTrackExe();
     void actionSetWatchdogTime();
     void pushButtonAutofill();
@@ -40,6 +41,7 @@ public slots:
     void textChangedOutputFolder(const QString &text);
     void textChangedExperimentName(const QString &text);
     void textChangedWeightsFile(const QString &text);
+    void textChangedGuessFile(const QString &text);
     void textChangedBatchFile(const QString &text);
     void toolButtonRunBatch();
 
@@ -58,7 +60,7 @@ private:
     void enumerateMenu(QMenu *menu, QList<QAction *> *actionList, bool addSubmenus = false, bool addSeparators = false);
     void lookForMocoTrack();
 
-    static void FindFiles(const QString &filename, const QString &path, QStringList *matchingFiles);
+    static void findFiles(const QString &filename, const QString &path, QStringList *matchingFiles);
 
     static bool checkReadFile(const std::string &filename, bool checkExecutable = false);
     static bool checkReadFolder(const std::string &foldername);
@@ -71,6 +73,9 @@ private:
     static void readTabDelimitedFile(const std::string &filename, std::vector<std::string> *columnHeadings, std::vector<std::vector<std::string>> *data);
     static bool strToBool(const std::string &input);
 
+    static int64_t findIndex(const std::vector<std::string>& v, const std::string &value);
+    static bool allIn(const std::vector<std::string>& a, const std::vector<std::string>& b);
+
     Ui::MainWindow *ui;
 
     QTimer *m_timer;
@@ -82,7 +87,7 @@ private:
     std::chrono::time_point<std::chrono::system_clock> m_startTime = std::chrono::system_clock::from_time_t(0);
     QVector<QIcon> m_iconList;
     int m_iconListIndex = 0;
-    std::vector<std::string> m_batchColumnHeadings = {"RunID","OSIMFile","TRCFile","OutputFolder","MarkerWeights","StartTime","EndTime","ReserveForce","MarkerWeight","ActuatorWeight","ConvergeTol","ConstraintTol","MeshIntervals","MaxIterations","AddReserves","RemoveMuscles"};
+    std::vector<std::string> m_batchColumnHeadings = {"RunID","OSIMFile","TRCFile","GuessFile","OutputFolder","MarkerWeights","StartTime","EndTime","ReserveForce","MarkerWeight","ActuatorWeight","ConvergeTol","ConstraintTol","MeshIntervals","MaxIterations","AddReserves","RemoveMuscles"};
     std::vector<std::vector<std::string>> m_batchData;
     size_t m_batchProcessingIndex = 0;
     bool m_batchProcessingRunning = false;

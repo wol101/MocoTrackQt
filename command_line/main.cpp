@@ -96,7 +96,8 @@ int main(int argc, const char **argv)
     tracker.setRemoveMuscles(removeMuscles);
 
     // these only get set if they are specified
-    if (argparse.Get("--meshInterval"s, &meshInterval)) { tracker.setMeshInterval(meshInterval); }
+    argparse.Get("--meshInterval"s, &meshInterval);
+    if (meshInterval > 0.0) { tracker.setMeshInterval(meshInterval); }
 
     std::string *errPtr = tracker.run();
     if (err) std::cerr << *errPtr;

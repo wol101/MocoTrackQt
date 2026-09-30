@@ -84,6 +84,7 @@ private:
     std::string m_processedOsimFile;
     std::string m_statesPath;
     std::string m_controlsPath;
+    std::string m_solutionPath;
     OpenSim::Model m_model;
 
     double m_startTime = 0;

@@ -160,7 +160,7 @@ std::string *Tracker::run()
     }
 
     // Update the solver tolerances.
-    auto& solver = mocoStudy.updSolver<OpenSim::MocoCasADiSolver>(); // could also be OpenSim::MocoTropterSolver
+    OpenSim::MocoCasADiSolver& solver = mocoStudy.updSolver<OpenSim::MocoCasADiSolver>(); // could also be OpenSim::MocoTropterSolver
     solver.set_optim_convergence_tolerance(m_convergenceTolerance);
     solver.set_optim_constraint_tolerance(m_constraintTolerance);
     solver.set_num_mesh_intervals(m_meshIntervals);
@@ -177,9 +177,11 @@ std::string *Tracker::run()
         }
 
         // 1. Create a fresh, correctly-sized guess for the NEW problem
+        solver.resetProblem(problem);
         OpenSim::MocoTrajectory guess = solver.createGuess("bounds");
 
         // 2. Load the old solution which may have fewer actuators and a different time grid
+        std::cout << "Reading guess file \"" << m_guessFile << "\"\n" << std::flush;
         OpenSim::MocoTrajectory oldSolution(m_guessFile);
 
         // 3. Resample the old solution onto the new guess's time grid
@@ -212,8 +214,13 @@ std::string *Tracker::run()
     std::cout << "Writing \"" << m_controlsPath << "\"\n" << std::flush;
     OpenSim::STOFileAdapter::write(mocoSolution.exportToControlsTable(), m_controlsPath);
 
+    // also the solution file
+    m_solutionPath = pystring::os::path::join(m_outputFolder, "04_"s + m_experimentName + "_solution.sto"s);
+    std::cout << "Writing \"" << m_solutionPath << "\"\n" << std::flush;
+    mocoSolution.write(m_solutionPath);
+
     // now run some analyses to get the data we actually want
-    std::string analyzePath = pystring::os::path::join(m_outputFolder, "04_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
+    std::string analyzePath = pystring::os::path::join(m_outputFolder, "05_"s + m_experimentName + "_AnalyzeTool_setup.xml"s);
     std::cout << "Writing \"" << analyzePath << "\"\n" << std::flush;
     createAnalyzerXML(analyzePath);
     OpenSim::AnalyzeTool analyze(analyzePath);

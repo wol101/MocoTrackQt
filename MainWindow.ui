@@ -411,7 +411,7 @@
     <item row="0" column="3">
      <widget class="QGroupBox" name="groupBox_7">
       <property name="title">
-       <string>GroupBox</string>
+       <string>Batch</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_8">
        <item row="0" column="0">
@@ -438,7 +438,7 @@
      <x>0</x>
      <y>0</y>
      <width>1249</width>
-     <height>33</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -599,15 +599,25 @@
   <tabstop>lineEditOutputFolder</tabstop>
   <tabstop>pushButtonAutofill</tabstop>
   <tabstop>lineEditExperimentName</tabstop>
+  <tabstop>pushButtonWeightsFile</tabstop>
+  <tabstop>lineEditWeightsFile</tabstop>
+  <tabstop>pushButtonGuessFile</tabstop>
+  <tabstop>lineEditGuessFile</tabstop>
+  <tabstop>pushButtonBatchFile</tabstop>
+  <tabstop>lineEditBatchFile</tabstop>
   <tabstop>pushButtonRun</tabstop>
+  <tabstop>toolButtonRunBatch</tabstop>
   <tabstop>pushButtonStop</tabstop>
   <tabstop>plainTextEditOutput</tabstop>
   <tabstop>lineEditStartTime</tabstop>
   <tabstop>lineEditEndTime</tabstop>
   <tabstop>lineEditReserveForce</tabstop>
   <tabstop>lineEditMarkerTrackingWeight</tabstop>
+  <tabstop>lineEditActuatorActivationWeight</tabstop>
   <tabstop>lineEditConvergenceTolerance</tabstop>
   <tabstop>lineEditConstraintTolerance</tabstop>
+  <tabstop>spinBoxMeshIntervals</tabstop>
+  <tabstop>spinBoxMaxIterations</tabstop>
   <tabstop>checkBoxAddReserves</tabstop>
   <tabstop>checkBoxRemoveMuscles</tabstop>
  </tabstops>

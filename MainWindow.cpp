@@ -349,7 +349,7 @@ void MainWindow::actionChooseBatchFile()
             std::vector<std::vector<std::string>> data;
             readTabDelimitedFile(batchFile, &columnHeadings, &data);
             if (columnHeadings.size() == 0 || data.size() == 0 || data[0].size() == 0) throw std::runtime_error(batchFile + " contains no data");
-            if (allIn(m_batchColumnHeadings, columnHeadings)) throw std::runtime_error(batchFile + " column heading mismatch");
+            if (!allIn(m_batchColumnHeadings, columnHeadings)) throw std::runtime_error(batchFile + " column heading mismatch");
             m_batchData = data;
             m_batchProcessingIndex = 0;
             m_batchProcessingRunning = false;
@@ -362,22 +362,23 @@ void MainWindow::actionChooseBatchFile()
         }
         std::string p = pystring::os::path::dirname(ui->lineEditBatchFile->text().toStdString()); // want the paths to be relative to the batch file
         Q_ASSERT(m_batchProcessingIndex < m_batchData[0].size());
-        ui->lineEditExperimentName->setText(QString::fromStdString(m_batchData[0][m_batchProcessingIndex]));
-        ui->lineEditOSIMFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[1][m_batchProcessingIndex])));
-        ui->lineEditTRCFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[2][m_batchProcessingIndex])));
-        ui->lineEditOutputFolder->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[3][m_batchProcessingIndex])));
-        ui->lineEditWeightsFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[4][m_batchProcessingIndex])));
-        ui->lineEditStartTime->setText(QString::fromStdString(m_batchData[5][m_batchProcessingIndex]));
-        ui->lineEditEndTime->setText(QString::fromStdString(m_batchData[6][m_batchProcessingIndex]));
-        ui->lineEditReserveForce->setText(QString::fromStdString(m_batchData[7][m_batchProcessingIndex]));
-        ui->lineEditMarkerTrackingWeight->setText(QString::fromStdString(m_batchData[8][m_batchProcessingIndex]));
-        ui->lineEditActuatorActivationWeight->setText(QString::fromStdString(m_batchData[9][m_batchProcessingIndex]));
-        ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[10][m_batchProcessingIndex]));
-        ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[11][m_batchProcessingIndex]));
-        ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[12][m_batchProcessingIndex]));
-        ui->spinBoxMaxIterations->setValue(std::stoi(m_batchData[13][m_batchProcessingIndex]));
-        ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[14][m_batchProcessingIndex]));
-        ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[15][m_batchProcessingIndex]));
+        ui->lineEditExperimentName->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "RunID"s)][m_batchProcessingIndex]));
+        ui->lineEditOSIMFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "OSIMFile"s)][m_batchProcessingIndex])));
+        ui->lineEditTRCFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "TRCFile"s)][m_batchProcessingIndex])));
+        ui->lineEditOutputFolder->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "OutputFolder"s)][m_batchProcessingIndex])));
+        ui->lineEditWeightsFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "MarkerWeights"s)][m_batchProcessingIndex])));
+        ui->lineEditGuessFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "GuessFile"s)][m_batchProcessingIndex])));
+        ui->lineEditStartTime->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "StartTime"s)][m_batchProcessingIndex]));
+        ui->lineEditEndTime->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "EndTime"s)][m_batchProcessingIndex]));
+        ui->lineEditReserveForce->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "ReserveForce"s)][m_batchProcessingIndex]));
+        ui->lineEditMarkerTrackingWeight->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "MarkerWeight"s)][m_batchProcessingIndex]));
+        ui->lineEditActuatorActivationWeight->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "ActuatorWeight"s)][m_batchProcessingIndex]));
+        ui->lineEditConvergenceTolerance->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "ConvergeTol"s)][m_batchProcessingIndex]));
+        ui->lineEditConstraintTolerance->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "ConstraintTol"s)][m_batchProcessingIndex]));
+        ui->spinBoxMeshIntervals->setValue(std::stoi(m_batchData[findIndex(m_batchColumnHeadings, "MeshIntervals"s)][m_batchProcessingIndex]));
+        ui->spinBoxMaxIterations->setValue(std::stoi(m_batchData[findIndex(m_batchColumnHeadings, "MaxIterations"s)][m_batchProcessingIndex]));
+        ui->checkBoxAddReserves->setChecked(strToBool(m_batchData[findIndex(m_batchColumnHeadings, "AddReserves"s)][m_batchProcessingIndex]));
+        ui->checkBoxRemoveMuscles->setChecked(strToBool(m_batchData[findIndex(m_batchColumnHeadings, "RemoveMuscles"s)][m_batchProcessingIndex]));
     }
 }
 
@@ -542,7 +543,7 @@ void MainWindow::toolButtonRunBatch()
         std::vector<std::vector<std::string>> data;
         readTabDelimitedFile(batchFile, &columnHeadings, &data);
         if (columnHeadings.size() == 0 || data.size() == 0 || data[0].size() == 0) throw std::runtime_error(batchFile + " contains no data");
-        if (allIn(m_batchColumnHeadings, columnHeadings)) throw std::runtime_error(batchFile + " column heading mismatch");
+        if (!allIn(m_batchColumnHeadings, columnHeadings)) throw std::runtime_error(batchFile + " column heading mismatch");
         m_batchData = data;
         m_batchProcessingIndex = 0;
         m_batchProcessingRunning = true;

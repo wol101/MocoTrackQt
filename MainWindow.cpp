@@ -192,7 +192,8 @@ void MainWindow::basicTimer()
             ui->lineEditTRCFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "TRCFile"s)][m_batchProcessingIndex])));
             ui->lineEditOutputFolder->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "OutputFolder"s)][m_batchProcessingIndex])));
             ui->lineEditWeightsFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "MarkerWeights"s)][m_batchProcessingIndex])));
-            ui->lineEditGuessFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "GuessFile"s)][m_batchProcessingIndex])));
+            if (m_batchData[findIndex(m_batchColumnHeadings, "GuessFile"s)][m_batchProcessingIndex].empty()) { ui->lineEditGuessFile->setText(""); }
+            else {ui->lineEditGuessFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "GuessFile"s)][m_batchProcessingIndex]))); }
             ui->lineEditStartTime->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "StartTime"s)][m_batchProcessingIndex]));
             ui->lineEditEndTime->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "EndTime"s)][m_batchProcessingIndex]));
             ui->lineEditReserveForce->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "ReserveForce"s)][m_batchProcessingIndex]));
@@ -367,7 +368,8 @@ void MainWindow::actionChooseBatchFile()
         ui->lineEditTRCFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "TRCFile"s)][m_batchProcessingIndex])));
         ui->lineEditOutputFolder->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "OutputFolder"s)][m_batchProcessingIndex])));
         ui->lineEditWeightsFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "MarkerWeights"s)][m_batchProcessingIndex])));
-        ui->lineEditGuessFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "GuessFile"s)][m_batchProcessingIndex])));
+        if (m_batchData[findIndex(m_batchColumnHeadings, "GuessFile"s)][m_batchProcessingIndex].empty()) { ui->lineEditGuessFile->setText(""); }
+        else {ui->lineEditGuessFile->setText(QString::fromStdString(pystring::os::path::join(p, m_batchData[findIndex(m_batchColumnHeadings, "GuessFile"s)][m_batchProcessingIndex]))); }
         ui->lineEditStartTime->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "StartTime"s)][m_batchProcessingIndex]));
         ui->lineEditEndTime->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "EndTime"s)][m_batchProcessingIndex]));
         ui->lineEditReserveForce->setText(QString::fromStdString(m_batchData[findIndex(m_batchColumnHeadings, "ReserveForce"s)][m_batchProcessingIndex]));

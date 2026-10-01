@@ -196,6 +196,7 @@ std::string *Tracker::run()
         for (const auto& name : oldControlNames) {
             guess.setControl(name, oldSolution.getControl(name));
         }
+        solver.setGuess(guess);
     }
 
     // now run the solver

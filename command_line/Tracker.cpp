@@ -181,8 +181,18 @@ std::string *Tracker::run()
         OpenSim::MocoTrajectory guess = solver.createGuess("bounds");
 
         // 2. Load the old solution which may have fewer actuators and a different time grid
+        // warning, this might throw and exception if the m_guessFile is not a valid solution file
         std::cout << "Reading guess file \"" << m_guessFile << "\"\n" << std::flush;
-        OpenSim::MocoTrajectory oldSolution(m_guessFile);
+        OpenSim::MocoTrajectory oldSolution;
+        try
+        {
+            oldSolution = OpenSim::MocoTrajectory(m_guessFile);
+        }
+        catch (...)
+        {
+            m_lastError = "Error: Tracker::run() unable to parse \"" + m_guessFile + "\"";
+            return &m_lastError;
+        }
 
         // 3. Resample the old solution onto the new guess's time grid
         oldSolution.resampleWithNumTimes(guess.getNumTimes());
@@ -193,8 +203,14 @@ std::string *Tracker::run()
 
         // 5. Copy over controls for actuators that still exist in the new model
         std::vector<std::string> oldControlNames = oldSolution.getControlNames();
-        for (const auto& name : oldControlNames) {
-            guess.setControl(name, oldSolution.getControl(name));
+        std::vector<std::string> newControlNames = guess.getControlNames();
+        for (const auto& name : oldControlNames)
+        {
+            if (std::find(newControlNames.begin(), newControlNames.end(), name) != newControlNames.end())
+            {
+                std::cout << "Adding guess for \"" << name << "\"\n" << std::flush;
+                guess.setControl(name, oldSolution.getControl(name));
+            }
         }
         solver.setGuess(guess);
     }

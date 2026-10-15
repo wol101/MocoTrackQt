@@ -79,6 +79,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEditOutputFolder->setText(settings.value("OutputFolder", "").toString());
     ui->lineEditBatchFile->setText(settings.value("BatchFile", "").toString());
     ui->lineEditWeightsFile->setText(settings.value("WeightsFile", "").toString());
+    ui->lineEditGuessFile->setText(settings.value("GuessFile", "").toString());
 
     auto children = findChildren<LineEditDouble *>();
     for (auto &&it : children)
